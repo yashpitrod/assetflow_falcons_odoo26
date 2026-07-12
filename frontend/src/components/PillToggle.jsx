@@ -1,6 +1,5 @@
 import { useState } from 'react';
 
-// iOS-style pill toggle switch inside a glass pill container
 export default function PillToggle({ checked = false, onChange, label = '' }) {
   const [isOn, setIsOn] = useState(checked);
 
@@ -14,7 +13,7 @@ export default function PillToggle({ checked = false, onChange, label = '' }) {
     <button
       type="button"
       onClick={toggle}
-      className="flex items-center gap-3 rounded-pill glass-surface px-4 py-2.5 cursor-pointer transition-all duration-200 hover:bg-white/[0.07]"
+      className="flex items-center gap-3 rounded-pill glass-surface px-4 py-2.5 min-h-[44px] cursor-pointer transition-all duration-200 hover:bg-white/[0.07]"
     >
       {label && <span className="text-text-secondary text-sm">{label}</span>}
       <div

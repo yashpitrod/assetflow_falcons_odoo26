@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ArrowLeftRight, Check, X, Search, Plus } from 'lucide-react';
 import { useFetch } from '../hooks/useFetch';
 import { getAllocations, getTransferRequests, approveTransfer, rejectTransfer } from '../api/allocations';
@@ -19,13 +19,21 @@ export default function AllocationPage() {
   const { addToast } = useToast();
 
   // Load both datasets in parallel — they share the same refresh key
-  const { data: allocRes, loading: allocLoading } = useFetch(getAllocations, null, [refreshKey]);
-  const { data: transRes, loading: transLoading } = useFetch(getTransferRequests, null, [refreshKey]);
+  const { data: allocationsData, loading: allocLoading, error: allocError } = useFetch(getAllocations, null, [refreshKey]);
+  const { data: transfersData, loading: transLoading, error: transError } = useFetch(getTransferRequests, null, [refreshKey]);
 
-  const allAllocations = allocRes?.data || [];
-  const allTransfers = transRes?.data || [];
+  const allAllocations = allocationsData ?? [];
+  const allTransfers = transfersData ?? [];
 
-  // Client-side search filter
+  useEffect(() => {
+    if (allocError) addToast(`Allocations failed to load: ${allocError}`, 'error');
+  }, [allocError, addToast]);
+
+  useEffect(() => {
+    if (transError) addToast(`Transfer requests failed to load: ${transError}`, 'error');
+  }, [transError, addToast]);
+
+  // Client-side search filter on server-returned data
   const allocations = useMemo(() => {
     if (!search) return allAllocations;
     const q = search.toLowerCase();
@@ -36,7 +44,7 @@ export default function AllocationPage() {
     );
   }, [allAllocations, search]);
 
-  const transfers = useMemo(() => {
+  const filteredTransfers = useMemo(() => {
     if (!search) return allTransfers;
     const q = search.toLowerCase();
     return allTransfers.filter(tr =>
@@ -240,9 +248,16 @@ export default function AllocationPage() {
 
       {/* Table */}
       <GlassCard padding="p-0">
+        {(activeTab === 'allocations' ? allocError : transError) && !(activeTab === 'allocations' ? allocLoading : transLoading) && (
+          <div className="p-4 border-b border-red-500/20 bg-red-500/5">
+            <p className="text-sm text-status-danger">
+              {activeTab === 'allocations' ? allocError : transError}
+            </p>
+          </div>
+        )}
         <Table
           columns={activeTab === 'allocations' ? allocationColumns : transferColumns}
-          data={activeTab === 'allocations' ? allocations : transfers}
+          data={activeTab === 'allocations' ? allocations : filteredTransfers}
           loading={activeTab === 'allocations' ? allocLoading : transLoading}
           emptyIcon={ArrowLeftRight}
           emptyTitle={activeTab === 'allocations' ? 'No active allocations' : 'No transfer requests'}

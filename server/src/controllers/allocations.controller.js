@@ -4,6 +4,22 @@ import { successResponse, errorResponse } from '../utils/responseFormatter.js';
 import { ASSET_STATUS } from '../utils/constants.js';
 import { logActivity } from '../utils/activityLogger.js';
 
+export const getAllocations = async (req, res, next) => {
+  try {
+    const allocations = await prisma.allocation.findMany({
+      include: {
+        asset: { select: { id: true, name: true, assetTag: true } },
+        employee: { select: { id: true, name: true, email: true } },
+        department: { select: { id: true, name: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    return successResponse(res, 200, 'Allocations fetched successfully', allocations);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const createAllocation = async (req, res, next) => {
   try {
     const { asset_id, employee_id, expected_return_date } = req.body;

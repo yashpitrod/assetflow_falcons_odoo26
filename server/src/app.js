@@ -13,6 +13,12 @@ import assetsRoutes from './routes/assets.routes.js';
 import allocationsRoutes from './routes/allocations.routes.js';
 import transferRequestsRoutes from './routes/transferRequests.routes.js';
 import bookingsRoutes from './routes/bookings.routes.js';
+import dashboardRoutes from './routes/dashboard.routes.js';
+import maintenanceRoutes from './routes/maintenance.routes.js';
+import auditRoutes from './routes/audit.routes.js';
+import reportsRoutes from './routes/reports.routes.js';
+import notificationsRoutes from './routes/notifications.routes.js';
+import activityLogsRoutes from './routes/activityLogs.routes.js';
 
 const app = express();
 
@@ -31,6 +37,12 @@ app.use('/api/assets', assetsRoutes);
 app.use('/api/allocations', allocationsRoutes);
 app.use('/api/transfer-requests', transferRequestsRoutes);
 app.use('/api/bookings', bookingsRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/maintenance-requests', maintenanceRoutes);
+app.use('/api', auditRoutes);
+app.use('/api/reports', reportsRoutes);
+app.use('/api/notifications', notificationsRoutes);
+app.use('/api/activity-logs', activityLogsRoutes);
 
 // Fallback route for 404 Not Found
 app.use((req, res) => {

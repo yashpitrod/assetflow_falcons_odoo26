@@ -25,14 +25,8 @@ export default function AssetRegistryPage() {
     [debouncedSearch, statusFilter]
   );
 
-  const { data: assetsRes, loading, error, refetch } = useFetch(
-    getAssets,
-    filters,
-    [filters]
-  );
-  
-  // Handle both { success: true, data: [...] } and flat array responses
-  const assets = assetsRes?.data ?? (Array.isArray(assetsRes) ? assetsRes : []);
+  const { data: assets, loading, error, refetch } = useFetch(getAssets, filters, [filters]);
+  const assetList = assets ?? [];
 
   // Surface errors via toast — no silent failures
   useEffect(() => {
@@ -100,7 +94,7 @@ export default function AssetRegistryPage() {
           <p className="eyebrow mb-1">Directory</p>
           <h1 className="text-2xl font-semibold text-text-primary tracking-tight">Asset Registry</h1>
           <p className="text-text-secondary text-sm mt-1">
-            {loading ? 'Loading…' : `${assets.length} asset${assets.length !== 1 ? 's' : ''}`}
+            {loading ? 'Loading…' : `${assetList.length} asset${assetList.length !== 1 ? 's' : ''}`}
           </p>
         </div>
 
@@ -189,20 +183,19 @@ export default function AssetRegistryPage() {
       {/* Error state */}
       {error && !loading && (
         <GlassCard padding="p-6" className="border border-red-500/20 bg-red-500/5">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <p className="text-sm text-status-danger">Failed to load assets: {error}</p>
-            <button onClick={refetch} className="btn-glass text-xs text-status-danger border-red-500/20">
+            <button onClick={refetch} className="btn-glass text-sm text-status-danger border-red-500/20 min-h-[44px] px-5">
               Retry
             </button>
           </div>
         </GlassCard>
       )}
 
-      {/* Table */}
       <GlassCard padding="p-0">
         <Table
           columns={columns}
-          data={assets}
+          data={assetList}
           loading={loading}
           emptyIcon={Package}
           emptyTitle="No assets found"

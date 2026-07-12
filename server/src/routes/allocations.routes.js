@@ -1,6 +1,6 @@
 // src/routes/allocations.routes.js
 import { Router } from 'express';
-import { createAllocation, returnAllocation } from '../controllers/allocations.controller.js';
+import { createAllocation, returnAllocation, getAllocations } from '../controllers/allocations.controller.js';
 import { authenticate } from '../middleware/auth.middleware.js';
 import { requireRole } from '../middleware/rbac.middleware.js';
 import { validate } from '../middleware/validate.middleware.js';
@@ -10,6 +10,9 @@ import { ROLES } from '../utils/constants.js';
 const router = Router();
 
 router.use(authenticate);
+
+// Get list of allocations
+router.get('/', getAllocations);
 
 // Create new allocation — restricted to privileged roles
 router.post(

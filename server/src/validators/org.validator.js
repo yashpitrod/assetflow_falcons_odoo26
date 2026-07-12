@@ -37,7 +37,7 @@ export const updateCategorySchema = z.object({
 
 export const promoteEmployeeSchema = z.object({
   params: z.object({
-    id: z.string().uuid("Invalid Employee ID format"),
+    id: z.coerce.number().int().positive("Invalid Employee ID format"),
   }),
   body: z.object({
     role: z.enum([ROLES.ADMIN, ROLES.ASSET_MANAGER, ROLES.DEPARTMENT_HEAD], {

@@ -39,7 +39,7 @@ function NewCycleModal({ onClose, onSave }) {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const { data: deptRes } = useFetch(getDepartments, null, []);
-  const departments = deptRes?.data || [];
+  const departments = deptRes ?? [];
 
   const validate = () => {
     const errs = {};
@@ -120,7 +120,7 @@ function AssignAuditorsModal({ cycle, onClose, onSave }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const { data: empRes } = useFetch(getEmployees, null, []);
-  const employees = empRes?.data || [];
+  const employees = empRes ?? [];
 
   const filtered = employees.filter(e =>
     e.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -212,7 +212,7 @@ function SubmitFindingsModal({ cycle, onClose, onSave }) {
   }, [cycle.scopeDepartmentId, cycle.scopeLocation]);
 
   const { data: assetRes, loading: assetsLoading } = useFetch(getAssets, assetFilters, [cycle.id, cycle.scopeDepartmentId, cycle.scopeLocation]);
-  const assets = assetRes?.data || [];
+  const assets = assetRes ?? [];
 
   // Sync findings rows when scoped assets load
   useEffect(() => {
@@ -341,7 +341,11 @@ export default function AuditPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: auditRes, loading, error, refetch } = useFetch(getAuditCycles, null, [refreshKey]);
-  const audits = auditRes?.data || [];
+  const audits = auditRes ?? [];
+
+  useEffect(() => {
+    if (error) addToast(`Audit cycles failed to load: ${error}`, 'error');
+  }, [error, addToast]);
 
   // RBAC — Admin/AssetManager can create cycles and assign auditors
   const canManageCycles = hasRole([EmployeeRole.Admin, EmployeeRole.AssetManager]);

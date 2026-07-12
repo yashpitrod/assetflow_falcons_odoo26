@@ -8,16 +8,18 @@ export const setAuthToken = (token) => {
 
 export const getAuthToken = () => authToken;
 
+export const getApiBaseUrl = () => BASE_URL;
+
 async function request(endpoint, options = {}) {
   const url = `${BASE_URL}${endpoint}`;
-  
+
   const headers = {
     'Content-Type': 'application/json',
     ...(options.headers || {}),
   };
 
   if (authToken) {
-    headers['Authorization'] = `Bearer ${authToken}`;
+    headers.Authorization = `Bearer ${authToken}`;
   }
 
   const config = {
@@ -25,28 +27,36 @@ async function request(endpoint, options = {}) {
     headers,
   };
 
+  let response;
   try {
-    const response = await fetch(url, config);
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || 'An error occurred while fetching data');
-    }
-
-    return data;
-  } catch (error) {
-    // If it's not a response error (e.g. network failure, or JSON parsing failed)
-    if (error.name === 'SyntaxError') {
-      throw new Error('Invalid response from server');
-    }
-    throw error;
+    response = await fetch(url, config);
+  } catch {
+    throw new Error(
+      `Cannot reach API at ${BASE_URL}. Confirm VITE_API_BASE_URL and that the Express server is running with CORS enabled.`
+    );
   }
+
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error(`Invalid response from server (${response.status})`);
+  }
+
+  if (!response.ok) {
+    throw new Error(data.message || `Request failed (${response.status})`);
+  }
+
+  return data;
 }
 
 export const client = {
   get: (endpoint, options = {}) => request(endpoint, { ...options, method: 'GET' }),
-  post: (endpoint, body, options = {}) => request(endpoint, { ...options, method: 'POST', body: JSON.stringify(body) }),
-  put: (endpoint, body, options = {}) => request(endpoint, { ...options, method: 'PUT', body: JSON.stringify(body) }),
-  patch: (endpoint, body, options = {}) => request(endpoint, { ...options, method: 'PATCH', body: JSON.stringify(body) }),
+  post: (endpoint, body, options = {}) =>
+    request(endpoint, { ...options, method: 'POST', body: JSON.stringify(body) }),
+  put: (endpoint, body, options = {}) =>
+    request(endpoint, { ...options, method: 'PUT', body: JSON.stringify(body) }),
+  patch: (endpoint, body, options = {}) =>
+    request(endpoint, { ...options, method: 'PATCH', body: JSON.stringify(body) }),
   delete: (endpoint, options = {}) => request(endpoint, { ...options, method: 'DELETE' }),
 };

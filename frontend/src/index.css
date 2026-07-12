@@ -1,7 +1,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
-@config "../tailwind.config.js";
+@theme {
+  --color-bg-base: #0A0A0B;
+  --color-surface-glass: rgba(255,255,255,0.04);
+  --color-surface-glass-border: rgba(255,255,255,0.08);
+  --color-accent-purple-from: #C026D3;
+  --color-accent-purple-to: #7C3AED;
+  --color-accent-indigo-from: #4338CA;
+  --color-accent-indigo-to: #1E1B4B;
+  --color-accent-yellow: #FACC15;
+  --color-text-primary: #F5F5F5;
+  --color-text-secondary: #8B8B93;
+  --color-text-dim: #55555C;
+  --color-status-success: #22C55E;
+  --color-status-warning: #F59E0B;
+  --color-status-danger: #EF4444;
 
+  --radius-card-lg: 28px;
+  --radius-card-sm: 20px;
+  --radius-pill: 9999px;
+
+  --font-sans: 'Manrope', system-ui, sans-serif;
+}
 /* ── Google Fonts (Manrope) ─────────────────────────────── */
 /* ── Global Resets ──────────────────────────────────────── */
 *,
@@ -177,6 +197,7 @@ body {
   font-size: 0.9rem;
   border: none;
   cursor: pointer;
+  min-height: 44px;
   transition: background 0.2s ease, transform 0.15s ease;
 }
 
@@ -205,6 +226,7 @@ body {
   font-size: 0.9rem;
   border: 1px solid rgba(255, 255, 255, 0.1);
   cursor: pointer;
+  min-height: 44px;
   transition: background 0.2s ease, border-color 0.2s ease;
 }
 
@@ -269,6 +291,37 @@ body {
 .animate-stagger-4 { animation-delay: 200ms; }
 .animate-stagger-5 { animation-delay: 250ms; }
 
+/* Modal scale + fade */
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes modalOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+.animate-modal-in {
+  animation: modalIn 0.2s ease-out forwards;
+}
+
+.animate-modal-out {
+  animation: modalOut 0.15s ease-in forwards;
+}
+
 /* ── Enhanced Glass Hover ───────────────────────────────── */
 .glass-surface {
   transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -301,8 +354,8 @@ body {
   background: rgba(255, 255, 255, 0.03);
 }
 
-/* ── Responsive Mobile Tables ───────────────────────────── */
-@media (max-width: 768px) {
+/* ── Responsive Mobile Tables (< 1024px stacked cards) ─── */
+@media (max-width: 1023px) {
   .responsive-table, .responsive-table thead, .responsive-table tbody, .responsive-table th, .responsive-table td, .responsive-table tr {
     display: block;
   }

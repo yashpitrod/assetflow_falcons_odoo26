@@ -1,21 +1,23 @@
 import { client } from './client';
+import { unwrapData } from '../utils/apiMappers';
 
 export async function getAuditCycles() {
-  return await client.get('/audit-cycles');
+  const data = unwrapData(await client.get('/audit-cycles'));
+  return Array.isArray(data) ? data : [];
 }
 
 export async function createAuditCycle(data) {
-  return await client.post('/audit-cycles', data);
+  return unwrapData(await client.post('/audit-cycles', data));
 }
 
 export async function addAuditors(cycleId, { auditorIds }) {
-  return await client.post(`/audit-cycles/${cycleId}/auditors`, { auditorIds });
+  return unwrapData(await client.post(`/audit-cycles/${cycleId}/auditors`, { auditorIds }));
 }
 
 export async function createAuditFinding(data) {
-  return await client.post('/audit-findings', data);
+  return unwrapData(await client.post('/audit-findings', data));
 }
 
 export async function closeAuditCycle(cycleId) {
-  return await client.post(`/audit-cycles/${cycleId}/close`, {});
+  return unwrapData(await client.post(`/audit-cycles/${cycleId}/close`, {}));
 }

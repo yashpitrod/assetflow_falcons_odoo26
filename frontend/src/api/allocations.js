@@ -1,29 +1,32 @@
 import { client } from './client';
+import { unwrapData, normalizeAllocations, normalizeTransfers } from '../utils/apiMappers';
 
 export async function getAllocations() {
-  return await client.get('/allocations');
+  const data = unwrapData(await client.get('/allocations'));
+  return normalizeAllocations(Array.isArray(data) ? data : []);
 }
 
 export async function allocateAsset(data) {
-  return await client.post('/allocations', data);
+  return unwrapData(await client.post('/allocations', data));
 }
 
 export async function returnAsset(allocationId, data) {
-  return await client.post(`/allocations/${allocationId}/return`, data);
+  return unwrapData(await client.post(`/allocations/${allocationId}/return`, data));
 }
 
 export async function getTransferRequests() {
-  return await client.get('/transfer-requests');
+  const data = unwrapData(await client.get('/transfer-requests'));
+  return normalizeTransfers(Array.isArray(data) ? data : []);
 }
 
 export async function createTransferRequest(data) {
-  return await client.post('/transfer-requests', data);
+  return unwrapData(await client.post('/transfer-requests', data));
 }
 
 export async function approveTransfer(requestId) {
-  return await client.post(`/transfer-requests/${requestId}/approve`, {});
+  return unwrapData(await client.post(`/transfer-requests/${requestId}/approve`, {}));
 }
 
 export async function rejectTransfer(requestId) {
-  return await client.post(`/transfer-requests/${requestId}/reject`, {});
+  return unwrapData(await client.post(`/transfer-requests/${requestId}/reject`, {}));
 }

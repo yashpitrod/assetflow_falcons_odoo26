@@ -1,28 +1,28 @@
 import { client } from './client';
+import { unwrapData, normalizeAssets } from '../utils/apiMappers';
 
 export async function getAssets(filters = {}) {
-  // Convert filters object into query string
   const queryParams = new URLSearchParams();
   Object.entries(filters).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== '') {
       queryParams.append(key, value);
     }
   });
-  
+
   const queryString = queryParams.toString();
   const endpoint = queryString ? `/assets?${queryString}` : '/assets';
-  
-  return await client.get(endpoint);
+  const data = unwrapData(await client.get(endpoint));
+  return normalizeAssets(Array.isArray(data) ? data : []);
 }
 
 export async function getAssetById(id) {
-  return await client.get(`/assets/${id}`);
+  return unwrapData(await client.get(`/assets/${id}`));
 }
 
 export async function createAsset(data) {
-  return await client.post('/assets', data);
+  return unwrapData(await client.post('/assets', data));
 }
 
 export async function updateAsset(id, data) {
-  return await client.put(`/assets/${id}`, data);
+  return unwrapData(await client.put(`/assets/${id}`, data));
 }

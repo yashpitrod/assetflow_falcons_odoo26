@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { CalendarClock, Plus, X, Clock, Search } from 'lucide-react';
 import { useFetch, useDebounce } from '../hooks/useFetch';
 import { getAllBookings, cancelBooking } from '../api/bookings';
@@ -20,17 +20,16 @@ export default function BookingPage() {
 
   const debouncedSearch = useDebounce(search, 300);
 
-  // No params needed for getAllBookings — filter client-side since mock doesn't support it
-  const { data: bookingsRes, loading, error, refetch } = useFetch(
-    getAllBookings,
-    null,
-    [refreshKey]
-  );
+  // Client-side filter on bookings returned from GET /bookings
+  const { data: bookingsData, loading, error, refetch } = useFetch(getAllBookings, null, [refreshKey]);
 
-  const allBookings = bookingsRes?.data || [];
+  const allBookings = bookingsData ?? [];
 
-  // Client-side filter (will be server-side once backend is live)
-  const bookings = useMemo(() => {
+  useEffect(() => {
+    if (error) addToast(`Bookings failed to load: ${error}`, 'error');
+  }, [error, addToast]);
+
+  const filteredBookings = useMemo(() => {
     let res = allBookings;
     if (statusFilter) res = res.filter(b => b.status === statusFilter);
     if (debouncedSearch) {
@@ -180,7 +179,7 @@ export default function BookingPage() {
       <GlassCard padding="p-0">
         <Table
           columns={columns}
-          data={bookings}
+          data={filteredBookings}
           loading={loading}
           emptyIcon={CalendarClock}
           emptyTitle="No bookings found"

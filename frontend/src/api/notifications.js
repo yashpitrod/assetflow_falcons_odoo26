@@ -1,19 +1,21 @@
 import { client } from './client';
+import { unwrapData, normalizeActivityLogs } from '../utils/apiMappers';
 
 export async function getNotifications(filter = 'all') {
   const query = filter !== 'all' ? `?filter=${filter}` : '';
-  return await client.get(`/notifications${query}`);
+  const data = unwrapData(await client.get(`/notifications${query}`));
+  return Array.isArray(data) ? data : [];
 }
 
 export async function markNotificationRead(id) {
-  return await client.patch(`/notifications/${id}/read`, {});
+  return unwrapData(await client.patch(`/notifications/${id}/read`, {}));
 }
 
 export async function markAllNotificationsRead() {
-  return await client.patch('/notifications/read-all', {});
+  return unwrapData(await client.patch('/notifications/read-all', {}));
 }
 
-// Paginated activity logs — backend may ignore page/limit initially, but we send them
 export async function getActivityLogs({ page = 1, limit = 20 } = {}) {
-  return await client.get(`/activity-logs?page=${page}&limit=${limit}`);
+  const data = unwrapData(await client.get(`/activity-logs?page=${page}&limit=${limit}`));
+  return normalizeActivityLogs(Array.isArray(data) ? data : []);
 }

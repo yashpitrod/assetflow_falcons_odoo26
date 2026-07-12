@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Bell, Activity, CheckCircle2, AlertTriangle, ArrowLeftRight, CalendarClock, Wrench, ClipboardCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useFetch } from '../hooks/useFetch';
 import { getNotifications, getActivityLogs, markAllNotificationsRead, markNotificationRead } from '../api/notifications';
@@ -115,23 +115,26 @@ export default function NotificationsPage() {
   const { addToast } = useToast();
 
   // Notifications fetch
-  const { data: notifRes, loading: notifLoading } = useFetch(
+  const { data: notifRes, loading: notifLoading, error: notifError } = useFetch(
     getNotifications,
     notifFilter,
     [notifFilter, refreshKey]
   );
 
-  // Activity logs fetch — paginated
-  const { data: logRes, loading: logLoading } = useFetch(
+  const { data: logRes, loading: logLoading, error: logError } = useFetch(
     () => getActivityLogs({ page: logPage, limit: LOGS_PER_PAGE }),
     null,
     [logPage, refreshKey]
   );
 
-  const notifications = notifRes?.data || [];
-  const logs = logRes?.data || [];
-  // Backend may return total count for pagination — gracefully handle missing field
-  const logTotalCount = logRes?.meta?.total || logRes?.total || null;
+  const notifications = notifRes ?? [];
+  const logs = logRes ?? [];
+  const logTotalCount = null;
+
+  useEffect(() => {
+    if (notifError) addToast(`Notifications failed to load: ${notifError}`, 'error');
+    if (logError) addToast(`Activity logs failed to load: ${logError}`, 'error');
+  }, [notifError, logError, addToast]);
   const hasMoreLogs = logTotalCount ? (logPage * LOGS_PER_PAGE < logTotalCount) : (logs.length === LOGS_PER_PAGE);
 
   const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);

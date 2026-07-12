@@ -45,13 +45,31 @@ export const MAINTENANCE_STATUS = {
   RESOLVED: 'Resolved',
 };
 
-export const NOTIFICATION_TYPES = {
+export const NOTIFICATION_TYPE = {
   ASSET_ASSIGNED: 'AssetAssigned',
   MAINTENANCE_APPROVED: 'MaintenanceApproved',
   MAINTENANCE_REJECTED: 'MaintenanceRejected',
   BOOKING_CONFIRMED: 'BookingConfirmed',
   BOOKING_CANCELLED: 'BookingCancelled',
+  BOOKING_REMINDER: 'BookingReminder',
   TRANSFER_APPROVED: 'TransferApproved',
   OVERDUE_RETURN: 'OverdueReturn',
   AUDIT_DISCREPANCY: 'AuditDiscrepancy',
+};
+
+export const MAINTENANCE_PRIORITY = {
+  LOW: 'Low',
+  MEDIUM: 'Medium',
+  HIGH: 'High',
+};
+
+export const AUDIT_STATUS = {
+  OPEN: 'Open',
+  CLOSED: 'Closed',
+};
+
+export const VERIFICATION_STATUS = {
+  VERIFIED: 'Verified',
+  MISSING: 'Missing',
+  DAMAGED: 'Damaged',
 };

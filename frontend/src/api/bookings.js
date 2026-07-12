@@ -1,17 +1,20 @@
 import { client } from './client';
+import { unwrapData, normalizeBookings } from '../utils/apiMappers';
 
 export async function getAssetBookings(assetId) {
-  return await client.get(`/assets/${assetId}/bookings`);
+  const data = unwrapData(await client.get(`/assets/${assetId}/bookings`));
+  return normalizeBookings(Array.isArray(data) ? data : []);
 }
 
 export async function getAllBookings() {
-  return await client.get('/bookings');
+  const data = unwrapData(await client.get('/bookings'));
+  return normalizeBookings(Array.isArray(data) ? data : []);
 }
 
 export async function createBooking(data) {
-  return await client.post('/bookings', data);
+  return unwrapData(await client.post('/bookings', data));
 }
 
 export async function cancelBooking(bookingId) {
-  return await client.post(`/bookings/${bookingId}/cancel`, {});
+  return unwrapData(await client.post(`/bookings/${bookingId}/cancel`, {}));
 }

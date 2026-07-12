@@ -33,8 +33,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await login(form);
-      authLogin(res.data.user, res.data.token);
-      addToast(`Welcome back, ${res.data.user.name}!`, 'success');
+      authLogin(res.user, res.token);
+      addToast(`Welcome back, ${res.user.name}!`, 'success');
       navigate('/dashboard');
     } catch (err) {
       addToast(err.message || 'Login failed', 'error');

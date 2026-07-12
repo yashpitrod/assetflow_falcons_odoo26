@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Wrench, Plus, ChevronRight, Check, Play, X, UserPlus } from 'lucide-react';
 import { useFetch } from '../hooks/useFetch';
 import { useAuth } from '../context/AuthContext';
@@ -66,7 +66,7 @@ function NewRequestModal({ onClose, onSave, assets, assetsLoading }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <GlassCard className="w-full max-w-md" padding="p-6">
+      <GlassCard className="w-full max-w-md animate-modal-in" padding="p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-text-primary font-semibold">New Maintenance Request</h2>
           <button onClick={onClose} className="text-text-dim hover:text-text-primary"><X size={18} /></button>
@@ -153,7 +153,7 @@ function AssignTechModal({ req, onClose, onSave }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <GlassCard className="w-full max-w-sm" padding="p-6">
+      <GlassCard className="w-full max-w-sm animate-modal-in" padding="p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-text-primary font-semibold">Assign Technician</h2>
           <button onClick={onClose} className="text-text-dim hover:text-text-primary"><X size={18} /></button>
@@ -188,8 +188,12 @@ export default function MaintenancePage() {
   const { addToast } = useToast();
 
   const [refreshKey, setRefreshKey] = useState(0);
-  const { data: maintRes, loading } = useFetch(getMaintenanceRequests, {}, [refreshKey]);
-  const requests = maintRes?.data || [];
+  const { data: requests, loading, error } = useFetch(getMaintenanceRequests, {}, [refreshKey]);
+  const requestList = requests ?? [];
+
+  useEffect(() => {
+    if (error) addToast(`Maintenance requests failed to load: ${error}`, 'error');
+  }, [error, addToast]);
 
   // Modals state
   const [showNewModal, setShowNewModal] = useState(false);
@@ -211,7 +215,7 @@ export default function MaintenancePage() {
     setAssetsLoading(true);
     try {
       const res = await getAssets();
-      let allAssets = res?.data || [];
+      let allAssets = Array.isArray(res) ? res : [];
       // Non-admin users can only raise requests for assets allocated to them
       if (!isAdmin) {
         allAssets = allAssets.filter(a =>
@@ -286,15 +290,19 @@ export default function MaintenancePage() {
       {/* Kanban */}
       {loading ? (
         <DashboardSkeleton />
-      ) : requests.length === 0 ? (
+      ) : error ? (
+        <GlassCard padding="p-6" className="border border-red-500/20 bg-red-500/5">
+          <EmptyState icon={Wrench} title="Could not load maintenance board" message={error} />
+        </GlassCard>
+      ) : requestList.length === 0 ? (
         <GlassCard><EmptyState icon={Wrench} title="No maintenance requests" message="Create your first request to get started." /></GlassCard>
       ) : (
-        <div className="flex-1 flex gap-5 overflow-x-auto pb-4 custom-scrollbar">
+        <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:flex 2xl:gap-5 2xl:overflow-x-auto pb-4 custom-scrollbar">
           {KANBAN_COLUMNS.map(col => {
-            const colRequests = requests.filter(r => r.status === col);
+            const colRequests = requestList.filter(r => r.status === col);
 
             return (
-              <div key={col} className="w-80 shrink-0 flex flex-col bg-white/[0.01] rounded-2xl border border-white/[0.03] overflow-hidden">
+              <div key={col} className="2xl:w-80 2xl:shrink-0 flex flex-col bg-white/[0.01] rounded-2xl border border-white/[0.03] overflow-hidden min-h-[200px]">
                 {/* Column header */}
                 <div className="p-4 border-b border-white/[0.05] flex items-center justify-between glass-surface sticky top-0 z-10">
                   <h3 className="font-semibold text-text-primary text-sm flex items-center gap-2">
@@ -313,7 +321,7 @@ export default function MaintenancePage() {
                       <GlassCard
                         key={req.id}
                         padding="p-4"
-                        className={`cursor-pointer group relative overflow-hidden animate-fade-in-up ${staggerClass}`}
+                        className={`cursor-pointer group relative overflow-hidden animate-fade-in-up transition-all duration-300 ${staggerClass}`}
                       >
                         <div className="flex justify-between items-start mb-2">
                           <p className="text-sm font-medium text-text-primary truncate pr-2">{req.asset?.name}</p>

@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useState, useCallback, useEffect } from 'react';
 import { BarChart3, Download, PieChart, Activity, TrendingUp } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
@@ -40,7 +40,7 @@ function buildCSVContent(utilData, maintData, idleData, usedData) {
   // Section 1: Department Utilization
   lines.push('Department Utilization');
   lines.push([escapeCSV('Department'), escapeCSV('Utilization %')].join(','));
-  (utilData?.data || []).forEach(d => {
+  (Array.isArray(utilData) ? utilData : []).forEach(d => {
     lines.push([escapeCSV(d.departmentName), escapeCSV(d.utilizationPercent)].join(','));
   });
   lines.push(''); // blank separator
@@ -48,7 +48,7 @@ function buildCSVContent(utilData, maintData, idleData, usedData) {
   // Section 2: Maintenance Frequency
   lines.push('Maintenance Frequency');
   lines.push([escapeCSV('Month'), escapeCSV('Requests')].join(','));
-  (maintData?.data || []).forEach(d => {
+  (Array.isArray(maintData) ? maintData : []).forEach(d => {
     lines.push([escapeCSV(d.month), escapeCSV(d.requests)].join(','));
   });
   lines.push('');
@@ -56,7 +56,7 @@ function buildCSVContent(utilData, maintData, idleData, usedData) {
   // Section 3: Idle Assets
   lines.push('Idle Assets (30+ days)');
   lines.push([escapeCSV('Asset Tag'), escapeCSV('Name'), escapeCSV('Days Idle')].join(','));
-  (idleData?.data || []).forEach(d => {
+  (Array.isArray(idleData) ? idleData : []).forEach(d => {
     lines.push([escapeCSV(d.assetTag), escapeCSV(d.name), escapeCSV(d.daysIdle)].join(','));
   });
   lines.push('');
@@ -64,7 +64,7 @@ function buildCSVContent(utilData, maintData, idleData, usedData) {
   // Section 4: Most Used Resources
   lines.push('Most Used Resources');
   lines.push([escapeCSV('Asset'), escapeCSV('Booking Count')].join(','));
-  (usedData?.data || []).forEach(d => {
+  (Array.isArray(usedData) ? usedData : []).forEach(d => {
     lines.push([escapeCSV(d.name), escapeCSV(d.bookingCount)].join(','));
   });
 
@@ -75,19 +75,26 @@ export default function ReportsPage() {
   const { addToast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
 
-  const { data: utilData, loading: utilLoading } = useFetch(getUtilizationReport, null, []);
-  const { data: maintData, loading: maintLoading } = useFetch(getMaintenanceFrequency, null, []);
-  const { data: idleData, loading: idleLoading } = useFetch(getIdleAssets, null, []);
-  const { data: usedData, loading: usedLoading } = useFetch(getMostUsedAssets, null, []);
+  const { data: utilData, loading: utilLoading, error: utilError } = useFetch(getUtilizationReport, null, []);
+  const { data: maintData, loading: maintLoading, error: maintError } = useFetch(getMaintenanceFrequency, null, []);
+  const { data: idleData, loading: idleLoading, error: idleError } = useFetch(getIdleAssets, null, []);
+  const { data: usedData, loading: usedLoading, error: usedError } = useFetch(getMostUsedAssets, null, []);
+
+  useEffect(() => {
+    if (utilError) addToast(`Utilization report failed: ${utilError}`, 'error');
+    if (maintError) addToast(`Maintenance frequency report failed: ${maintError}`, 'error');
+    if (idleError) addToast(`Idle assets report failed: ${idleError}`, 'error');
+    if (usedError) addToast(`Most-used assets report failed: ${usedError}`, 'error');
+  }, [utilError, maintError, idleError, usedError, addToast]);
 
   const utilizationChartData = useMemo(() => {
-    if (!utilData?.data) return [];
-    return utilData.data.map(d => ({ name: d.departmentName?.split(' ')[0], utilization: d.utilizationPercent }));
+    if (!Array.isArray(utilData)) return [];
+    return utilData.map(d => ({ name: d.departmentName?.split(' ')[0], utilization: d.utilizationPercent }));
   }, [utilData]);
 
   const maintChartData = useMemo(() => {
-    if (!maintData?.data) return [];
-    return maintData.data;
+    if (!Array.isArray(maintData)) return [];
+    return maintData;
   }, [maintData]);
 
   // Client-side CSV export with proper escaping — no backend dependency
@@ -213,11 +220,11 @@ export default function ReportsPage() {
           </div>
           {idleLoading ? (
             <LoadingSkeleton variant="row" count={5} />
-          ) : (idleData?.data || []).length === 0 ? (
+          ) : !(Array.isArray(idleData) && idleData.length) ? (
             <div className="py-8 text-center text-text-dim text-sm">No idle assets — all assets are in use!</div>
           ) : (
             <div className="space-y-2">
-              {(idleData?.data || []).map((asset, i) => {
+              {idleData.map((asset, i) => {
                 const pct = Math.min((asset.daysIdle / 90) * 100, 100);
                 return (
                   <div key={asset.id} className={`p-3 rounded-2xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] transition-colors animate-stagger-${i + 1} animate-fade-in-up`}>
@@ -254,12 +261,12 @@ export default function ReportsPage() {
           </div>
           {usedLoading ? (
             <LoadingSkeleton variant="row" count={5} />
-          ) : (usedData?.data || []).length === 0 ? (
+          ) : !(Array.isArray(usedData) && usedData.length) ? (
             <div className="py-8 text-center text-text-dim text-sm">No booking data yet</div>
           ) : (
             <div className="space-y-3">
-              {(usedData?.data || []).map((asset, i) => {
-                const max = usedData.data[0]?.bookingCount || 1;
+              {usedData.map((asset, i) => {
+                const max = usedData[0]?.bookingCount || 1;
                 const pct = (asset.bookingCount / max) * 100;
                 return (
                   <div key={asset.assetId} className={`animate-stagger-${i + 1} animate-fade-in-up`}>

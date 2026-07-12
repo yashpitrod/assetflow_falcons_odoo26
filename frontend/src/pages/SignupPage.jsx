@@ -58,7 +58,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       const res = await signup({ name: form.name, email: form.email, password: form.password });
-      authLogin(res.data.user, res.data.token);
+      authLogin(res.user, res.token);
       addToast('Account created! Welcome to AssetFlow.', 'success');
       navigate('/dashboard');
     } catch (err) {

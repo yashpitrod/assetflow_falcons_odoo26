@@ -26,7 +26,7 @@ function DeptModal({ onClose, onSave, dept }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <GlassCard className="w-full max-w-md" padding="p-6">
+      <GlassCard className="w-full max-w-md animate-modal-in" padding="p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-text-primary font-semibold">{dept ? 'Edit Department' : 'New Department'}</h2>
           <button onClick={onClose} className="text-text-dim hover:text-text-primary"><X size={18} /></button>
@@ -75,7 +75,7 @@ function CategoryModal({ onClose, onSave, cat }) {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <GlassCard className="w-full max-w-md" padding="p-6">
+      <GlassCard className="w-full max-w-md animate-modal-in" padding="p-6">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-text-primary font-semibold">{cat ? 'Edit Category' : 'New Category'}</h2>
           <button onClick={onClose} className="text-text-dim hover:text-text-primary"><X size={18} /></button>
@@ -144,9 +144,9 @@ export default function OrgSetupPage() {
   const { data: catsRes, loading: catsLoading, refetch: refetchCats } = useFetch(getCategories, null, []);
   const { data: empsRes, loading: empsLoading, refetch: refetchEmps } = useFetch(getEmployees, null, []);
 
-  const depts = deptsRes?.data || [];
-  const cats = catsRes?.data || [];
-  const emps = empsRes?.data || [];
+  const depts = deptsRes ?? [];
+  const cats = catsRes ?? [];
+  const emps = empsRes ?? [];
 
   const tabs = [
     { id: 'departments', label: 'Departments', icon: Building2 },
