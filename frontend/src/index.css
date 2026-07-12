@@ -347,58 +347,59 @@ body {
 
 /* ── Table Row Hover ────────────────────────────────────── */
 .table-row-hover {
-  transition: background 0.15s ease;
+  transition: background 0.15s ease, transform 0.15s ease;
 }
 
 .table-row-hover:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px);
 }
 
 /* ── Responsive Mobile Tables (< 1024px stacked cards) ─── */
 @media (max-width: 1023px) {
-  .responsive-table, .responsive-table thead, .responsive-table tbody, .responsive-table th, .responsive-table td, .responsive-table tr {
+  .responsive-table, .responsive-table tbody, .responsive-table tr, .responsive-table td {
     display: block;
+    width: 100%;
   }
   
-  .responsive-table thead tr {
-    position: absolute;
-    top: -9999px;
-    left: -9999px;
+  .responsive-table thead {
+    display: none;
   }
   
   .responsive-table tr {
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
-    margin-bottom: 12px;
+    margin-bottom: 16px;
     padding: 12px;
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(255, 255, 255, 0.03);
   }
   
   .responsive-table td {
-    border: none;
+    border: none !important;
     position: relative;
     padding: 8px 0 !important;
-    padding-left: 40% !important;
+    padding-left: 45% !important;
     min-height: 40px;
     display: flex;
     align-items: center;
+    justify-content: flex-end;
+    text-align: right;
   }
   
-  .responsive-table td:before {
+  .responsive-table td::before {
     content: attr(data-label);
     position: absolute;
     left: 0;
-    width: 35%;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40%;
     padding-right: 10px;
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
     color: #8B8B93;
     white-space: nowrap;
-  }
-  
-  .responsive-table td:last-child {
-    border-bottom: 0;
+    text-align: left;
   }
 }
 

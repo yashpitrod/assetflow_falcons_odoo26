@@ -321,7 +321,7 @@ export default function MaintenancePage() {
                       <GlassCard
                         key={req.id}
                         padding="p-4"
-                        className={`cursor-pointer group relative overflow-hidden animate-fade-in-up transition-all duration-300 ${staggerClass}`}
+                        className={`cursor-pointer group glass-surface-hover relative overflow-hidden animate-fade-in-up transition-all duration-300 ${staggerClass}`}
                       >
                         <div className="flex justify-between items-start mb-2">
                           <p className="text-sm font-medium text-text-primary truncate pr-2">{req.asset?.name}</p>
