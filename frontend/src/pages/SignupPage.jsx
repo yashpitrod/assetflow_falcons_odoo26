@@ -7,12 +7,25 @@ import GlassCard from '../components/GlassCard';
 import { signup } from '../api/auth';
 
 import Input from '../components/Input';
+// Reusable form field wrapper
+function Field({ id, label, error, icon, type, trailing, ...props }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className="eyebrow">{label}</label>
+      <Input id={id} type={type} icon={icon} trailing={trailing} {...props} />
+      {error && <p className="text-status-danger text-xs">{error}</p>}
+    </div>
+  );
+}
+
 export default function SignupPage() {
   const navigate = useNavigate();
   const { login: authLogin } = useAuth();
   const { addToast } = useToast();
 
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -62,7 +75,7 @@ export default function SignupPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <Input
+          <Field
             id="signup-name"
             label="Full Name"
             icon={User}
@@ -72,7 +85,7 @@ export default function SignupPage() {
             error={errors.name}
             autoComplete="name"
           />
-          <Input
+          <Field
             id="signup-email"
             label="Work Email"
             type="email"
@@ -83,27 +96,47 @@ export default function SignupPage() {
             error={errors.email}
             autoComplete="email"
           />
-          <Input
+          <Field
             id="signup-password"
             label="Password"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             icon={Lock}
             placeholder="Min. 6 characters"
             value={form.password}
             onChange={set('password')}
             error={errors.password}
             autoComplete="new-password"
+            trailing={
+              <button
+                type="button"
+                onClick={() => setShowPassword(s => !s)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="text-gray-500 hover:text-white transition-colors p-1"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            }
           />
-          <Input
+          <Field
             id="signup-confirm"
             label="Confirm Password"
-            type="password"
+            type={showConfirmPassword ? 'text' : 'password'}
             icon={Lock}
             placeholder="Repeat password"
             value={form.confirmPassword}
             onChange={set('confirmPassword')}
             error={errors.confirmPassword}
             autoComplete="new-password"
+            trailing={
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(s => !s)}
+                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
+                className="text-gray-500 hover:text-white transition-colors p-1"
+              >
+                {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            }
           />
 
           {/* Role notice */}

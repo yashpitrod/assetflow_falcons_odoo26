@@ -59,29 +59,43 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <Input
-            id="login-email"
-            label="Email Address"
-            type="email"
-            icon={Mail}
-            placeholder="you@company.com"
-            value={form.email}
-            autoComplete="email"
-            onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-            error={errors.email}
-          />
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="login-email" className="eyebrow">Email Address</label>
+            <Input
+              id="login-email"
+              type="email"
+              icon={Mail}
+              placeholder="you@company.com"
+              value={form.email}
+              autoComplete="email"
+              onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+            />
+            {errors.email && <p className="text-status-danger text-xs">{errors.email}</p>}
+          </div>
 
-          <Input
-            id="login-password"
-            label="Password"
-            type="password"
-            icon={Lock}
-            placeholder="••••••••"
-            value={form.password}
-            autoComplete="current-password"
-            onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-            error={errors.password}
-          />
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="login-password" className="eyebrow">Password</label>
+            <Input
+              id="login-password"
+              type={showPassword ? 'text' : 'password'}
+              icon={Lock}
+              placeholder="••••••••"
+              value={form.password}
+              autoComplete="current-password"
+              onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+              trailing={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(s => !s)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  className="text-gray-500 hover:text-white transition-colors p-1"
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              }
+            />
+            {errors.password && <p className="text-status-danger text-xs">{errors.password}</p>}
+          </div>
 
           <div className="flex justify-end">
             <Link to="/forgot-password" className="text-xs text-text-dim hover:text-accent-yellow transition-colors">
