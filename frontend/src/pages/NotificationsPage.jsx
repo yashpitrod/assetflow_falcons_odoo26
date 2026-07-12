@@ -188,7 +188,7 @@ export default function NotificationsPage() {
               )}
             </button>
             <button
-              onClick={() => setActiveView('logs')}
+              onClick={() => { setActiveView('logs'); setLogPage(1); }}
               className={`flex items-center gap-2 px-4 py-1.5 rounded-pill text-sm font-medium transition-colors ${
                 activeView === 'logs' ? 'bg-white/[0.08] text-text-primary' : 'text-text-dim hover:text-text-secondary'
               }`}

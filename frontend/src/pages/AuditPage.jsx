@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ClipboardCheck, Plus, CheckCircle2, AlertTriangle, Users, Search, X } from 'lucide-react';
 import { useFetch } from '../hooks/useFetch';
 import { useAuth } from '../context/AuthContext';
@@ -199,23 +199,31 @@ function AssignAuditorsModal({ cycle, onClose, onSave }) {
 
 // ── Submit Findings Modal ──────────────────────────────────────
 function SubmitFindingsModal({ cycle, onClose, onSave }) {
+  const { addToast } = useToast();
   const [findings, setFindings] = useState([]);
   const [submitting, setSubmitting] = useState(false);
-  const { data: assetRes, loading: assetsLoading } = useFetch(getAssets, cycle.scopeDepartmentId ? { department: cycle.scopeDepartmentId } : {}, [cycle.id]);
+
+  // Scope filters mirror GET /assets query params from architecture.md
+  const assetFilters = useMemo(() => {
+    const filters = {};
+    if (cycle.scopeDepartmentId) filters.department = cycle.scopeDepartmentId;
+    if (cycle.scopeLocation) filters.location = cycle.scopeLocation;
+    return filters;
+  }, [cycle.scopeDepartmentId, cycle.scopeLocation]);
+
+  const { data: assetRes, loading: assetsLoading } = useFetch(getAssets, assetFilters, [cycle.id, cycle.scopeDepartmentId, cycle.scopeLocation]);
   const assets = assetRes?.data || [];
 
-  // Initialize findings state when assets load
-  useMemo(() => {
-    if (assets.length > 0 && findings.length === 0) {
-      setFindings(assets.map(a => ({
-        assetId: a.id,
-        assetName: a.name,
-        assetTag: a.assetTag,
-        expectedLocation: a.location || '',
-        verificationStatus: '',
-        notes: '',
-      })));
-    }
+  // Sync findings rows when scoped assets load
+  useEffect(() => {
+    setFindings(assets.map(a => ({
+      assetId: a.id,
+      assetName: a.name,
+      assetTag: a.assetTag,
+      expectedLocation: a.location || '',
+      verificationStatus: '',
+      notes: '',
+    })));
   }, [assets]);
 
   const updateFinding = (idx, field, value) => {
@@ -226,7 +234,8 @@ function SubmitFindingsModal({ cycle, onClose, onSave }) {
     // Validate: every asset must have a status
     const incomplete = findings.filter(f => !f.verificationStatus);
     if (incomplete.length > 0) {
-      return; // silently prevent — the UI shows which ones are unmarked
+      addToast(`Mark all ${incomplete.length} remaining asset${incomplete.length !== 1 ? 's' : ''} before submitting.`, 'error');
+      return;
     }
     setSubmitting(true);
     await onSave(cycle.id, findings);

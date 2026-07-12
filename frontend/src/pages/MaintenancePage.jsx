@@ -37,7 +37,7 @@ function columnLabel(status) {
 }
 
 // ── New Request Modal ──────────────────────────────────────────
-function NewRequestModal({ onClose, onSave, assets, isAdmin }) {
+function NewRequestModal({ onClose, onSave, assets, assetsLoading }) {
   const [form, setForm] = useState({ assetId: '', issueDescription: '', priority: MaintenancePriority.Medium });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -78,9 +78,10 @@ function NewRequestModal({ onClose, onSave, assets, isAdmin }) {
             <select
               className="glass-input"
               value={form.assetId}
+              disabled={assetsLoading}
               onChange={e => setForm(f => ({ ...f, assetId: e.target.value }))}
             >
-              <option value="">Select an asset…</option>
+              <option value="">{assetsLoading ? 'Loading assets…' : 'Select an asset…'}</option>
               {assets.map(a => (
                 <option key={a.id} value={a.id}>{a.name} ({a.assetTag})</option>
               ))}
@@ -383,7 +384,7 @@ export default function MaintenancePage() {
           onClose={() => setShowNewModal(false)}
           onSave={handleNewRequest}
           assets={assetsForForm}
-          isAdmin={isAdmin}
+          assetsLoading={assetsLoading}
         />
       )}
 
