@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Package, Search, Plus, Filter, X, Tag, MapPin, Calendar } from 'lucide-react';
 import { useFetch, useDebounce } from '../hooks/useFetch';
 import { getAssets } from '../api/assets';
@@ -7,6 +7,7 @@ import StatusPill from '../components/StatusPill';
 import Table from '../components/Table';
 import { formatDate, formatCurrency } from '../utils/formatters';
 import { AssetStatus } from '../utils/constants';
+import { useToast } from '../components/Toast';
 
 const STATUS_OPTIONS = ['', ...Object.values(AssetStatus)];
 
@@ -14,6 +15,7 @@ export default function AssetRegistryPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const { addToast } = useToast();
 
   // Debounce search so we don't re-fetch on every keystroke
   const debouncedSearch = useDebounce(search, 300);
@@ -28,7 +30,14 @@ export default function AssetRegistryPage() {
     filters,
     [filters]
   );
-  const assets = assetsRes?.data || [];
+  
+  // Handle both { success: true, data: [...] } and flat array responses
+  const assets = assetsRes?.data ?? (Array.isArray(assetsRes) ? assetsRes : []);
+
+  // Surface errors via toast — no silent failures
+  useEffect(() => {
+    if (error) addToast(`Assets failed to load: ${error}`, 'error');
+  }, [error, addToast]);
 
   const columns = [
     {

@@ -5,7 +5,7 @@ import GlassCard from './GlassCard';
 // Used for secondary KPIs in bento grids.
 export default function StatCard({ label, value, suffix = '', trend, icon: Icon, className = '' }) {
   return (
-    <GlassCard className={`flex flex-col gap-3 ${className}`} padding="p-5">
+    <GlassCard className={`flex flex-col gap-3 glass-card-hover ${className}`} padding="p-5">
       <div className="flex items-center justify-between">
         <span className="eyebrow">{label}</span>
         {Icon && (

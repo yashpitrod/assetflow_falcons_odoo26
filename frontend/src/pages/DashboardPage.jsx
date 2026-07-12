@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useEffect } from 'react';
 import { Package, ArrowLeftRight, CalendarClock, Wrench, AlertTriangle, Clock, Activity } from 'lucide-react';
 import { useFetch } from '../hooks/useFetch';
 import { getDashboardKpis, getRecentActivity, getOverdueReturns } from '../api/dashboard';
@@ -9,6 +9,7 @@ import { DashboardSkeleton } from '../components/LoadingSkeleton';
 import EmptyState from '../components/EmptyState';
 import { formatDate, timeAgo } from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../components/Toast';
 
 // Memoised: formats action log strings once, not on every re-render
 const formatAction = (action) =>
@@ -39,16 +40,37 @@ const OverdueRow = memo(function OverdueRow({ al }) {
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  // Pass null as params since these endpoints need no arguments
-  const { data: kpis, loading: kpisLoading } = useFetch(getDashboardKpis, null, []);
+  const { addToast } = useToast();
+  
+  const { data: kpis, loading: kpisLoading, error: kpisError } = useFetch(getDashboardKpis, null, []);
   const { data: activityRes, loading: activityLoading } = useFetch(getRecentActivity, null, []);
   const { data: overdueRes, loading: overdueLoading } = useFetch(getOverdueReturns, null, []);
 
+  // Surface API errors via toast — no silent failures per AGENTS.md
+  useEffect(() => {
+    if (kpisError) addToast(`Dashboard KPIs failed to load: ${kpisError}`, 'error');
+  }, [kpisError, addToast]);
+
   if (kpisLoading) return <DashboardSkeleton />;
 
-  const kpi = kpis?.data || {};
-  const activity = activityRes?.data || [];
-  const overdue = overdueRes?.data || [];
+  // Handle both { data: {...} } and flat response shapes from backend
+  const kpi = kpis?.data ?? kpis ?? {};
+  const activity = activityRes?.data ?? activityRes ?? [];
+  const overdue = overdueRes?.data ?? overdueRes ?? [];
+
+  // Normalise every numeric field to 0 if missing — no blank stat cards per AGENTS.md
+  const safeKpi = {
+    utilizationPercent: Number(kpi.utilizationPercent ?? 0),
+    totalAssets: Number(kpi.totalAssets ?? 0),
+    availableAssets: Number(kpi.availableAssets ?? 0),
+    allocatedAssets: Number(kpi.allocatedAssets ?? 0),
+    activeBookingsToday: Number(kpi.activeBookingsToday ?? 0),
+    pendingTransfers: Number(kpi.pendingTransfers ?? 0),
+    underMaintenance: Number(kpi.underMaintenance ?? 0),
+    pendingMaintenance: Number(kpi.pendingMaintenance ?? 0),
+    openAuditCycles: Number(kpi.openAuditCycles ?? 0),
+    overdueReturns: Number(kpi.overdueReturns ?? 0),
+  };
 
   return (
     <div className="space-y-6 max-w-7xl animate-fade-in-up">
@@ -66,7 +88,7 @@ export default function DashboardPage() {
         <GlassCard className="flex flex-col items-center justify-center col-span-1 animate-stagger-1 animate-fade-in-up" padding="p-6">
           <p className="eyebrow mb-4">Asset Utilization</p>
           <RadialGauge
-            value={kpi.utilizationPercent || 0}
+            value={safeKpi.utilizationPercent}
             max={100}
             label="Fleet Utilization"
             subtitle="Allocated + Reserved / Total"
@@ -76,12 +98,12 @@ export default function DashboardPage() {
 
         <div className="col-span-1 lg:col-span-3 grid grid-cols-2 md:grid-cols-3 gap-4">
           {[
-            { label: 'Total Assets', value: kpi.totalAssets || 0, icon: Package, delay: 1 },
-            { label: 'Available', value: kpi.availableAssets || 0, icon: Package, delay: 2 },
-            { label: 'Allocated', value: kpi.allocatedAssets || 0, icon: ArrowLeftRight, delay: 3 },
-            { label: 'Active Bookings', value: kpi.activeBookingsToday || 0, icon: CalendarClock, delay: 4 },
-            { label: 'Pending Transfers', value: kpi.pendingTransfers || 0, icon: ArrowLeftRight, delay: 5 },
-            { label: 'In Maintenance', value: kpi.underMaintenance || 0, icon: Wrench, delay: 5 },
+            { label: 'Total Assets', value: safeKpi.totalAssets, icon: Package, delay: 1 },
+            { label: 'Available', value: safeKpi.availableAssets, icon: Package, delay: 2 },
+            { label: 'Allocated', value: safeKpi.allocatedAssets, icon: ArrowLeftRight, delay: 3 },
+            { label: 'Active Bookings', value: safeKpi.activeBookingsToday, icon: CalendarClock, delay: 4 },
+            { label: 'Pending Transfers', value: safeKpi.pendingTransfers, icon: ArrowLeftRight, delay: 5 },
+            { label: 'In Maintenance', value: safeKpi.underMaintenance, icon: Wrench, delay: 5 },
           ].map(({ label, value, icon, delay }) => (
             <div key={label} className={`animate-stagger-${delay} animate-fade-in-up`}>
               <StatCard label={label} value={value} icon={icon} />
@@ -159,10 +181,10 @@ export default function DashboardPage() {
       {/* Quick stats row */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Pending Maintenance', value: kpi.pendingMaintenance || 0, color: 'text-status-warning', delay: 1 },
-          { label: 'Open Audits', value: kpi.openAuditCycles || 0, color: 'text-accent-yellow', delay: 2 },
-          { label: 'Overdue Returns', value: kpi.overdueReturns || 0, color: 'text-status-danger', delay: 3 },
-          { label: 'Pending Transfers', value: kpi.pendingTransfers || 0, color: 'text-[#818CF8]', delay: 4 },
+          { label: 'Pending Maintenance', value: safeKpi.pendingMaintenance, color: 'text-status-warning', delay: 1 },
+          { label: 'Open Audits', value: safeKpi.openAuditCycles, color: 'text-accent-yellow', delay: 2 },
+          { label: 'Overdue Returns', value: safeKpi.overdueReturns, color: 'text-status-danger', delay: 3 },
+          { label: 'Pending Transfers', value: safeKpi.pendingTransfers, color: 'text-[#818CF8]', delay: 4 },
         ].map(({ label, value, color, delay }) => (
           <GlassCard key={label} padding="p-4" className={`text-center animate-stagger-${delay} animate-fade-in-up`}>
             <p className="eyebrow mb-1">{label}</p>
