@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Bell, Activity, CheckCircle2, AlertTriangle, ArrowLeftRight, CalendarClock, Wrench, ClipboardCheck } from 'lucide-react';
+import { Bell, Activity, CheckCircle2, AlertTriangle, ArrowLeftRight, CalendarClock, Wrench, ClipboardCheck, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useFetch } from '../hooks/useFetch';
 import { getNotifications, getActivityLogs, markAllNotificationsRead, markNotificationRead } from '../api/notifications';
 import GlassCard from '../components/GlassCard';
@@ -61,7 +61,7 @@ function NotificationItem({ n, onMarkRead }) {
         <p className="text-xs text-text-dim mt-1 font-medium">{timeAgo(n.createdAt)}</p>
       </div>
 
-      {/* Unread indicator */}
+      {/* Unread indicator dot */}
       <div className="flex items-start mt-1.5 shrink-0">
         {!n.isRead ? (
           <div
@@ -94,7 +94,7 @@ function ActivityItem({ log }) {
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-0.5">
             {Object.entries(log.details).map(([k, v]) => (
               <span key={k} className="text-xs text-text-dim">
-                <span className="font-medium text-text-secondary">{k}:</span> {v}
+                <span className="font-medium text-text-secondary">{k}:</span> {String(v)}
               </span>
             ))}
           </div>
@@ -105,28 +105,38 @@ function ActivityItem({ log }) {
   );
 }
 
+const LOGS_PER_PAGE = 20;
+
 export default function NotificationsPage() {
   const [activeView, setActiveView] = useState('notifications');
   const [notifFilter, setNotifFilter] = useState('all');
   const [refreshKey, setRefreshKey] = useState(0);
+  const [logPage, setLogPage] = useState(1);
   const { addToast } = useToast();
 
-  const { data: notifRes, loading: notifLoading, error: notifError } = useFetch(
+  // Notifications fetch
+  const { data: notifRes, loading: notifLoading } = useFetch(
     getNotifications,
     notifFilter,
     [notifFilter, refreshKey]
   );
+
+  // Activity logs fetch — paginated
   const { data: logRes, loading: logLoading } = useFetch(
-    getActivityLogs,
-    {},
-    [refreshKey]
+    () => getActivityLogs({ page: logPage, limit: LOGS_PER_PAGE }),
+    null,
+    [logPage, refreshKey]
   );
 
   const notifications = notifRes?.data || [];
   const logs = logRes?.data || [];
+  // Backend may return total count for pagination — gracefully handle missing field
+  const logTotalCount = logRes?.meta?.total || logRes?.total || null;
+  const hasMoreLogs = logTotalCount ? (logPage * LOGS_PER_PAGE < logTotalCount) : (logs.length === LOGS_PER_PAGE);
 
   const unreadCount = useMemo(() => notifications.filter(n => !n.isRead).length, [notifications]);
 
+  // ── Mark as read handlers ────────────────────────────────────
   const handleMarkRead = async (id) => {
     try {
       await markNotificationRead(id);
@@ -188,6 +198,7 @@ export default function NotificationsPage() {
             </button>
           </div>
 
+          {/* Mark All Read — only on notifications tab when there are unread */}
           {activeView === 'notifications' && unreadCount > 0 && (
             <button
               onClick={handleMarkAllRead}
@@ -251,7 +262,7 @@ export default function NotificationsPage() {
             </div>
           ) : logs.length === 0 ? (
             <div className="py-16">
-              <EmptyState icon={Activity} title="No activity recorded" />
+              <EmptyState icon={Activity} title="No activity recorded" message="Workflow actions will appear here." />
             </div>
           ) : (
             <div role="list" aria-label="Activity log">
@@ -264,6 +275,34 @@ export default function NotificationsPage() {
           )
         )}
       </GlassCard>
+
+      {/* Pagination controls — Activity Log tab only */}
+      {activeView === 'logs' && !logLoading && logs.length > 0 && (
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-text-dim">
+            Page {logPage}
+            {logTotalCount ? ` of ${Math.ceil(logTotalCount / LOGS_PER_PAGE)}` : ''}
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setLogPage(p => Math.max(1, p - 1))}
+              disabled={logPage === 1}
+              className="btn-glass text-xs flex items-center gap-1 disabled:opacity-30"
+              aria-label="Previous page"
+            >
+              <ChevronLeft size={14} /> Previous
+            </button>
+            <button
+              onClick={() => setLogPage(p => p + 1)}
+              disabled={!hasMoreLogs}
+              className="btn-glass text-xs flex items-center gap-1 disabled:opacity-30"
+              aria-label="Next page"
+            >
+              Next <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -20,6 +20,11 @@ export async function assignTechnician(requestId, technicianName) {
   return await client.post(`/maintenance-requests/${requestId}/assign-technician`, { technicianName });
 }
 
+// Explicit transition from TechnicianAssigned → InProgress
+export async function startMaintenanceWork(requestId) {
+  return await client.post(`/maintenance-requests/${requestId}/start`, {});
+}
+
 export async function resolveMaintenanceRequest(requestId, data) {
   return await client.post(`/maintenance-requests/${requestId}/resolve`, data);
 }

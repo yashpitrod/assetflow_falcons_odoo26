@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { BarChart3, Download, PieChart, Activity, TrendingUp } from 'lucide-react';
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import GlassCard from '../components/GlassCard';
 import { useFetch } from '../hooks/useFetch';
-import { getUtilizationReport, getMaintenanceFrequency, getIdleAssets, getMostUsedAssets, exportReport } from '../api/reports';
+import { getUtilizationReport, getMaintenanceFrequency, getIdleAssets, getMostUsedAssets } from '../api/reports';
 import LoadingSkeleton from '../components/LoadingSkeleton';
 import { useToast } from '../components/Toast';
 
@@ -26,10 +26,55 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
+// ── CSV Escaping — wraps fields in quotes and escapes embedded quotes/commas ──
+function escapeCSV(value) {
+  if (value === null || value === undefined) return '""';
+  const str = String(value);
+  // Always wrap in quotes; double any existing quotes inside
+  return `"${str.replace(/"/g, '""')}"`;
+}
+
+function buildCSVContent(utilData, maintData, idleData, usedData) {
+  const lines = [];
+
+  // Section 1: Department Utilization
+  lines.push('Department Utilization');
+  lines.push([escapeCSV('Department'), escapeCSV('Utilization %')].join(','));
+  (utilData?.data || []).forEach(d => {
+    lines.push([escapeCSV(d.departmentName), escapeCSV(d.utilizationPercent)].join(','));
+  });
+  lines.push(''); // blank separator
+
+  // Section 2: Maintenance Frequency
+  lines.push('Maintenance Frequency');
+  lines.push([escapeCSV('Month'), escapeCSV('Requests')].join(','));
+  (maintData?.data || []).forEach(d => {
+    lines.push([escapeCSV(d.month), escapeCSV(d.requests)].join(','));
+  });
+  lines.push('');
+
+  // Section 3: Idle Assets
+  lines.push('Idle Assets (30+ days)');
+  lines.push([escapeCSV('Asset Tag'), escapeCSV('Name'), escapeCSV('Days Idle')].join(','));
+  (idleData?.data || []).forEach(d => {
+    lines.push([escapeCSV(d.assetTag), escapeCSV(d.name), escapeCSV(d.daysIdle)].join(','));
+  });
+  lines.push('');
+
+  // Section 4: Most Used Resources
+  lines.push('Most Used Resources');
+  lines.push([escapeCSV('Asset'), escapeCSV('Booking Count')].join(','));
+  (usedData?.data || []).forEach(d => {
+    lines.push([escapeCSV(d.name), escapeCSV(d.bookingCount)].join(','));
+  });
+
+  return lines.join('\n');
+}
+
 export default function ReportsPage() {
   const { addToast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
-  
+
   const { data: utilData, loading: utilLoading } = useFetch(getUtilizationReport, null, []);
   const { data: maintData, loading: maintLoading } = useFetch(getMaintenanceFrequency, null, []);
   const { data: idleData, loading: idleLoading } = useFetch(getIdleAssets, null, []);
@@ -37,7 +82,6 @@ export default function ReportsPage() {
 
   const utilizationChartData = useMemo(() => {
     if (!utilData?.data) return [];
-    // Data now has departmentName + utilizationPercent shape
     return utilData.data.map(d => ({ name: d.departmentName?.split(' ')[0], utilization: d.utilizationPercent }));
   }, [utilData]);
 
@@ -46,17 +90,27 @@ export default function ReportsPage() {
     return maintData.data;
   }, [maintData]);
 
-  const handleExport = async () => {
+  // Client-side CSV export with proper escaping — no backend dependency
+  const handleExport = useCallback(() => {
     setIsExporting(true);
     try {
-      await exportReport('csv');
+      const csvContent = buildCSVContent(utilData, maintData, idleData, usedData);
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `assetflow_report_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
       addToast('Report exported successfully', 'success');
     } catch {
       addToast('Export failed', 'error');
     } finally {
       setIsExporting(false);
     }
-  };
+  }, [utilData, maintData, idleData, usedData, addToast]);
 
   return (
     <div className="space-y-6 max-w-7xl animate-fade-in-up">
@@ -83,7 +137,7 @@ export default function ReportsPage() {
 
       {/* Row 1: Utilization Bar + Maintenance Line */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
-        
+
         {/* Department Utilization — bar chart */}
         <GlassCard padding="p-6" className="lg:col-span-3 animate-stagger-1 animate-fade-in-up">
           <div className="flex items-center justify-between mb-6">
@@ -95,6 +149,8 @@ export default function ReportsPage() {
           </div>
           {utilLoading ? (
             <div className="h-[240px]"><LoadingSkeleton variant="card" /></div>
+          ) : utilizationChartData.length === 0 ? (
+            <div className="h-[240px] flex items-center justify-center text-text-dim text-sm">No utilization data yet</div>
           ) : (
             <div className="h-[240px] w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -125,6 +181,8 @@ export default function ReportsPage() {
           </div>
           {maintLoading ? (
             <div className="h-[240px]"><LoadingSkeleton variant="card" /></div>
+          ) : maintChartData.length === 0 ? (
+            <div className="h-[240px] flex items-center justify-center text-text-dim text-sm">No maintenance data yet</div>
           ) : (
             <div className="h-[240px] w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -155,10 +213,11 @@ export default function ReportsPage() {
           </div>
           {idleLoading ? (
             <LoadingSkeleton variant="row" count={5} />
+          ) : (idleData?.data || []).length === 0 ? (
+            <div className="py-8 text-center text-text-dim text-sm">No idle assets — all assets are in use!</div>
           ) : (
             <div className="space-y-2">
               {(idleData?.data || []).map((asset, i) => {
-                // Visual urgency bar based on daysIdle
                 const pct = Math.min((asset.daysIdle / 90) * 100, 100);
                 return (
                   <div key={asset.id} className={`p-3 rounded-2xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.04] transition-colors animate-stagger-${i + 1} animate-fade-in-up`}>
@@ -195,6 +254,8 @@ export default function ReportsPage() {
           </div>
           {usedLoading ? (
             <LoadingSkeleton variant="row" count={5} />
+          ) : (usedData?.data || []).length === 0 ? (
+            <div className="py-8 text-center text-text-dim text-sm">No booking data yet</div>
           ) : (
             <div className="space-y-3">
               {(usedData?.data || []).map((asset, i) => {
