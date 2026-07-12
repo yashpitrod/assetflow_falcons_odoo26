@@ -16,12 +16,21 @@ html {
   font-family: 'Manrope', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 body {
   background-color: #0A0A0B;
   color: #F5F5F5;
   min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Ensure React root fills full screen */
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ── Glass Surface Utility ──────────────────────────────── */
