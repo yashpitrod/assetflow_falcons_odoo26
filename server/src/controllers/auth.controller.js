@@ -15,11 +15,11 @@ export const signup = async (req, res, next) => {
       return errorResponse(res, 409, 'Email is already registered');
     }
 
-    const password_hash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 10);
 
     // Creates user as Employee by default
     const newUser = await prisma.employee.create({
-      data: { name, email, password_hash, role: ROLES.EMPLOYEE },
+      data: { name, email, passwordHash, role: ROLES.EMPLOYEE },
     });
 
     const token = jwt.sign({ id: newUser.id, role: newUser.role }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN });

@@ -11,8 +11,10 @@ export const validate = (schema) => {
       
       next();
     } catch (error) {
-      if (error.errors && Array.isArray(error.errors)) {
-        const specificErrorMessage = error.errors
+      // Zod v4 uses .issues, older versions use .errors
+      const issues = error.issues ?? error.errors;
+      if (issues && Array.isArray(issues)) {
+        const specificErrorMessage = issues
           .map((err) => `${err.path.join('.')}: ${err.message}`)
           .join(', ');
 
