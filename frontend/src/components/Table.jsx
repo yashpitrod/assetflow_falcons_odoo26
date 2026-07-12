@@ -56,7 +56,7 @@ export default function Table({
                 <tr 
                   key={row[rowKey] || rowIndex} 
                   onClick={() => onRowClick?.(row)}
-                  className={`animate-fade-in-up ${staggerClass} hover:bg-white/[0.02] transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                  className={`table-row-hover animate-fade-in-up ${staggerClass} ${onRowClick ? 'cursor-pointer' : ''}`}
                 >
                   {columns.map((col, colIndex) => (
                     <td 

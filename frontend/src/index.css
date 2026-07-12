@@ -131,31 +131,31 @@ body {
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateY(-12px) scale(0.95);
+    transform: translateX(24px) scale(0.96);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateX(0) scale(1);
   }
 }
 
 @keyframes toast-out {
   from {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateX(0) scale(1);
   }
   to {
     opacity: 0;
-    transform: translateY(-12px) scale(0.95);
+    transform: translateX(24px) scale(0.96);
   }
 }
 
 .toast-enter {
-  animation: toast-in 0.3s ease-out forwards;
+  animation: toast-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .toast-exit {
-  animation: toast-out 0.25s ease-in forwards;
+  animation: toast-out 0.2s ease-in forwards;
 }
 
 /* ── Yellow CTA Button ──────────────────────────────────── */
@@ -234,8 +234,24 @@ body {
 }
 
 .animate-fade-in-up {
-  animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   opacity: 0;
+}
+
+/* Route-level page transition — 150ms ease-out per spec */
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-page-in {
+  animation: pageIn 0.18s ease-out forwards;
 }
 
 .animate-stagger-1 { animation-delay: 50ms; }
@@ -246,7 +262,18 @@ body {
 
 /* ── Enhanced Glass Hover ───────────────────────────────── */
 .glass-surface {
-  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Use this class on interactive cards to get a subtle lift */
+.glass-card-hover {
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.14);
 }
 
 .glass-surface-hover:hover {
@@ -254,6 +281,15 @@ body {
   border-color: rgba(255, 255, 255, 0.16);
   box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.4);
   transform: translateY(-2px);
+}
+
+/* ── Table Row Hover ────────────────────────────────────── */
+.table-row-hover {
+  transition: background 0.15s ease;
+}
+
+.table-row-hover:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 /* ── Responsive Mobile Tables ───────────────────────────── */
