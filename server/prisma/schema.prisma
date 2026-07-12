@@ -1,0 +1,419 @@
+// ============================================
+// AssetFlow — Prisma Schema
+// Enterprise Asset & Resource Management System
+// ============================================
+// Naming: Models are PascalCase, DB tables/columns are snake_case via @@map/@map
+// All 13 tables for all 10 screens designed upfront
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role {
+  Admin
+  AssetManager
+  DepartmentHead
+  Employee
+}
+
+enum Status {
+  Active
+  Inactive
+}
+
+enum AssetStatus {
+  Available
+  Allocated
+  Reserved
+  UnderMaintenance
+  Lost
+  Retired
+  Disposed
+}
+
+enum AssetCondition {
+  New
+  Good
+  Fair
+  Poor
+  Damaged
+}
+
+enum AllocationStatus {
+  Active
+  Returned
+}
+
+enum TransferStatus {
+  Requested
+  Approved
+  Rejected
+  Reallocated
+}
+
+enum BookingStatus {
+  Upcoming
+  Ongoing
+  Completed
+  Cancelled
+}
+
+enum MaintenancePriority {
+  Low
+  Medium
+  High
+}
+
+enum MaintenanceStatus {
+  Pending
+  Approved
+  Rejected
+  TechnicianAssigned
+  InProgress
+  Resolved
+}
+
+enum AuditStatus {
+  Open
+  Closed
+}
+
+enum VerificationStatus {
+  Verified
+  Missing
+  Damaged
+}
+
+enum NotificationType {
+  AssetAssigned
+  MaintenanceApproved
+  MaintenanceRejected
+  BookingConfirmed
+  BookingCancelled
+  BookingReminder
+  TransferApproved
+  OverdueReturn
+  AuditDiscrepancy
+}
+
+// ============================================
+// MODELS
+// ============================================
+
+/// Organizational unit — supports hierarchy via parent_department_id
+model Department {
+  id                  Int          @id @default(autoincrement())
+  name                String
+  code                String       @unique
+  headId              Int?         @map("head_id")
+  parentDepartmentId  Int?         @map("parent_department_id")
+  status              Status       @default(Active)
+  createdAt           DateTime     @default(now()) @map("created_at")
+  updatedAt           DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  head                Employee?    @relation("DepartmentHead", fields: [headId], references: [id])
+  parentDepartment    Department?  @relation("DepartmentHierarchy", fields: [parentDepartmentId], references: [id])
+  childDepartments    Department[] @relation("DepartmentHierarchy")
+  employees           Employee[]   @relation("EmployeeDepartment")
+  assets              Asset[]
+  allocations         Allocation[]
+  auditCycles         AuditCycle[]
+
+  @@map("departments")
+}
+
+/// Asset category with optional warranty and custom fields
+model Category {
+  id              Int      @id @default(autoincrement())
+  name            String
+  warrantyPeriod  Int?     @map("warranty_period") // in months
+  extraFields     Json?    @map("extra_fields") // jsonb for category-specific fields
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  assets          Asset[]
+
+  @@map("categories")
+}
+
+/// User account — signup always creates role=Employee; Admin promotes via Employee Directory
+model Employee {
+  id            Int      @id @default(autoincrement())
+  name          String
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  departmentId  Int?     @map("department_id")
+  role          Role     @default(Employee)
+  status        Status   @default(Active)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  department    Department? @relation("EmployeeDepartment", fields: [departmentId], references: [id])
+
+  // Inverse relations — Department head
+  headOfDepartments Department[] @relation("DepartmentHead")
+
+  // Inverse relations — Allocations
+  allocations           Allocation[]
+
+  // Inverse relations — TransferRequests
+  transfersFrom         TransferRequest[] @relation("TransferFrom")
+  transfersTo           TransferRequest[] @relation("TransferTo")
+  transfersRequested    TransferRequest[] @relation("TransferRequestedBy")
+  transfersApproved     TransferRequest[] @relation("TransferApprovedBy")
+
+  // Inverse relations — Bookings
+  bookings              Booking[]
+
+  // Inverse relations — Maintenance
+  maintenanceRaised     MaintenanceRequest[] @relation("MaintenanceRaisedBy")
+  maintenanceApproved   MaintenanceRequest[] @relation("MaintenanceApprovedBy")
+
+  // Inverse relations — Audit
+  auditCyclesCreated    AuditCycle[]         @relation("AuditCreatedBy")
+  auditAssignments      AuditCycleAuditor[]
+  auditFindings         AuditFinding[]
+
+  // Inverse relations — Notifications & Logs
+  notifications         Notification[]
+  activityLogs          ActivityLog[]
+
+  @@map("employees")
+}
+
+/// Physical or virtual asset tracked by the organization
+model Asset {
+  id              Int            @id @default(autoincrement())
+  assetTag        String         @unique @map("asset_tag") // auto-generated: AF-0001, AF-0002, ...
+  name            String
+  categoryId      Int            @map("category_id")
+  serialNumber    String?        @map("serial_number")
+  acquisitionDate DateTime?      @map("acquisition_date")
+  acquisitionCost Decimal?       @map("acquisition_cost") @db.Decimal(12, 2)
+  condition       AssetCondition @default(New)
+  location        String?
+  photoUrl        String?        @map("photo_url")
+  isBookable      Boolean        @default(false) @map("is_bookable")
+  status          AssetStatus    @default(Available)
+  departmentId    Int?           @map("department_id")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  category        Category       @relation(fields: [categoryId], references: [id])
+  department      Department?    @relation(fields: [departmentId], references: [id])
+  allocations     Allocation[]
+  transferRequests TransferRequest[]
+  bookings        Booking[]
+  maintenanceRequests MaintenanceRequest[]
+  auditFindings   AuditFinding[]
+
+  // Composite index for dashboard filtering (status + department)
+  @@index([status, departmentId], map: "idx_asset_status_dept")
+  @@index([categoryId], map: "idx_asset_category")
+  @@map("assets")
+}
+
+/// Tracks which employee/department holds an asset and when it was returned
+model Allocation {
+  id                    Int              @id @default(autoincrement())
+  assetId               Int              @map("asset_id")
+  employeeId            Int?             @map("employee_id")
+  departmentId          Int?             @map("department_id")
+  allocatedDate         DateTime         @default(now()) @map("allocated_date")
+  expectedReturnDate    DateTime?        @map("expected_return_date")
+  actualReturnDate      DateTime?        @map("actual_return_date")
+  conditionNotesOnReturn String?         @map("condition_notes_on_return")
+  status                AllocationStatus @default(Active)
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  asset                 Asset            @relation(fields: [assetId], references: [id])
+  employee              Employee?        @relation(fields: [employeeId], references: [id])
+  department            Department?      @relation(fields: [departmentId], references: [id])
+
+  // Index for overdue detection queries
+  @@index([status, expectedReturnDate], map: "idx_allocation_overdue")
+  @@index([assetId], map: "idx_allocation_asset")
+  @@map("allocations")
+}
+
+/// Request to transfer an asset from one employee to another
+model TransferRequest {
+  id              Int            @id @default(autoincrement())
+  assetId         Int            @map("asset_id")
+  fromEmployeeId  Int            @map("from_employee_id")
+  toEmployeeId    Int            @map("to_employee_id")
+  reason          String
+  status          TransferStatus @default(Requested)
+  requestedBy     Int            @map("requested_by")
+  approvedBy      Int?           @map("approved_by")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  asset           Asset          @relation(fields: [assetId], references: [id])
+  fromEmployee    Employee       @relation("TransferFrom", fields: [fromEmployeeId], references: [id])
+  toEmployee      Employee       @relation("TransferTo", fields: [toEmployeeId], references: [id])
+  requester       Employee       @relation("TransferRequestedBy", fields: [requestedBy], references: [id])
+  approver        Employee?      @relation("TransferApprovedBy", fields: [approvedBy], references: [id])
+
+  @@index([assetId], map: "idx_transfer_asset")
+  @@index([status], map: "idx_transfer_status")
+  @@map("transfer_requests")
+}
+
+/// Time-slot booking for shared/bookable assets (meeting rooms, vehicles, etc.)
+model Booking {
+  id                  Int           @id @default(autoincrement())
+  resourceAssetId     Int           @map("resource_asset_id")
+  bookedByEmployeeId  Int           @map("booked_by_employee_id")
+  startTime           DateTime      @map("start_time")
+  endTime             DateTime      @map("end_time")
+  status              BookingStatus @default(Upcoming)
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  resourceAsset       Asset         @relation(fields: [resourceAssetId], references: [id])
+  bookedByEmployee    Employee      @relation(fields: [bookedByEmployeeId], references: [id])
+
+  // Composite index for fast overlap-checking queries
+  @@index([resourceAssetId, startTime, endTime], map: "idx_booking_overlap")
+  @@index([status], map: "idx_booking_status")
+  @@map("bookings")
+}
+
+/// Maintenance request raised by an employee, routed through approval workflow
+model MaintenanceRequest {
+  id                  Int                 @id @default(autoincrement())
+  assetId             Int                 @map("asset_id")
+  raisedByEmployeeId  Int                 @map("raised_by_employee_id")
+  issueDescription    String              @map("issue_description")
+  priority            MaintenancePriority @default(Medium)
+  photoUrl            String?             @map("photo_url")
+  status              MaintenanceStatus   @default(Pending)
+  technicianName      String?             @map("technician_name")
+  approvedBy          Int?                @map("approved_by")
+  createdAt           DateTime            @default(now()) @map("created_at")
+  updatedAt           DateTime            @updatedAt @map("updated_at")
+
+  // Relations
+  asset               Asset               @relation(fields: [assetId], references: [id])
+  raisedByEmployee    Employee            @relation("MaintenanceRaisedBy", fields: [raisedByEmployeeId], references: [id])
+  approver            Employee?           @relation("MaintenanceApprovedBy", fields: [approvedBy], references: [id])
+
+  @@index([status], map: "idx_maintenance_status")
+  @@index([assetId], map: "idx_maintenance_asset")
+  @@map("maintenance_requests")
+}
+
+/// Periodic audit cycle scoped to a department or location
+model AuditCycle {
+  id                  Int          @id @default(autoincrement())
+  scopeDepartmentId   Int?         @map("scope_department_id")
+  scopeLocation       String?      @map("scope_location")
+  dateRangeStart      DateTime     @map("date_range_start")
+  dateRangeEnd        DateTime     @map("date_range_end")
+  status              AuditStatus  @default(Open)
+  createdBy           Int          @map("created_by")
+  createdAt           DateTime     @default(now()) @map("created_at")
+  updatedAt           DateTime     @updatedAt @map("updated_at")
+
+  // Relations
+  scopeDepartment     Department?  @relation(fields: [scopeDepartmentId], references: [id])
+  creator             Employee     @relation("AuditCreatedBy", fields: [createdBy], references: [id])
+  auditors            AuditCycleAuditor[]
+  findings            AuditFinding[]
+
+  @@index([status], map: "idx_audit_status")
+  @@map("audit_cycles")
+}
+
+/// Many-to-many join: which employees are auditors for a given audit cycle
+model AuditCycleAuditor {
+  id                  Int        @id @default(autoincrement())
+  auditCycleId        Int        @map("audit_cycle_id")
+  auditorEmployeeId   Int        @map("auditor_employee_id")
+
+  // Relations
+  auditCycle          AuditCycle @relation(fields: [auditCycleId], references: [id])
+  auditor             Employee   @relation(fields: [auditorEmployeeId], references: [id])
+
+  // Prevent duplicate assignments
+  @@unique([auditCycleId, auditorEmployeeId], map: "uq_audit_auditor")
+  @@map("audit_cycle_auditors")
+}
+
+/// Individual finding for an asset during an audit cycle
+model AuditFinding {
+  id                  Int                @id @default(autoincrement())
+  auditCycleId        Int                @map("audit_cycle_id")
+  assetId             Int                @map("asset_id")
+  auditorId           Int                @map("auditor_id")
+  expectedLocation    String?            @map("expected_location")
+  verificationStatus  VerificationStatus @map("verification_status")
+  notes               String?
+  createdAt           DateTime           @default(now()) @map("created_at")
+
+  // Relations
+  auditCycle          AuditCycle         @relation(fields: [auditCycleId], references: [id])
+  asset               Asset              @relation(fields: [assetId], references: [id])
+  auditor             Employee           @relation(fields: [auditorId], references: [id])
+
+  @@index([auditCycleId], map: "idx_finding_cycle")
+  @@map("audit_findings")
+}
+
+/// In-app notification for workflow events (assignments, approvals, overdue, etc.)
+model Notification {
+  id                  Int              @id @default(autoincrement())
+  recipientEmployeeId Int              @map("recipient_employee_id")
+  type                NotificationType
+  message             String
+  isRead              Boolean          @default(false) @map("is_read")
+  relatedEntityType   String?          @map("related_entity_type")
+  relatedEntityId     Int?             @map("related_entity_id")
+  createdAt           DateTime         @default(now()) @map("created_at")
+
+  // Relations
+  recipient           Employee         @relation(fields: [recipientEmployeeId], references: [id])
+
+  // Index for fast unread-count and notification-list queries
+  @@index([recipientEmployeeId, isRead], map: "idx_notification_unread")
+  @@index([recipientEmployeeId, createdAt], map: "idx_notification_recent")
+  @@map("notifications")
+}
+
+/// Immutable audit trail — every workflow action (approve/reject/close) logs here
+model ActivityLog {
+  id                Int      @id @default(autoincrement())
+  actorEmployeeId   Int      @map("actor_employee_id")
+  action            String   // e.g. "APPROVED_MAINTENANCE", "CLOSED_AUDIT", "ALLOCATED_ASSET"
+  entityType        String   @map("entity_type") // e.g. "Asset", "MaintenanceRequest", "AuditCycle"
+  entityId          Int      @map("entity_id")
+  details           Json?    // jsonb for additional context
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // Relations
+  actor             Employee @relation(fields: [actorEmployeeId], references: [id])
+
+  // Index for entity-specific history lookups (Screen 10)
+  @@index([entityType, entityId], map: "idx_activity_entity")
+  @@index([actorEmployeeId], map: "idx_activity_actor")
+  @@index([createdAt], map: "idx_activity_time")
+  @@map("activity_logs")
+}
