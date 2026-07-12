@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Suspense, lazy, useState } from 'react';
 import { Menu } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -31,15 +31,26 @@ function ProtectedRoute({ children, requiredRoles }) {
   return children;
 }
 
+// Page transition wrapper — animates on route change
+function PageTransition({ children }) {
+  const location = useLocation();
+  return (
+    <div key={location.pathname} className="animate-page-in">
+      {children}
+    </div>
+  );
+}
+
 // Main layout — responsive sidebar + content area
 function AppLayout({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-bg-base overflow-hidden">
+    <div className="flex min-h-screen bg-bg-base">
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       
-      <main className="flex-1 flex flex-col md:ml-[220px] min-h-screen max-w-full overflow-hidden">
+      {/* main must be offset by sidebar width on md+; sidebar is position:fixed */}
+      <main className="flex-1 flex flex-col min-h-screen md:pl-[220px] w-full">
         {/* Mobile Header with Hamburger */}
         <div className="md:hidden flex items-center justify-between p-4 border-b border-white/[0.05] glass-surface sticky top-0 z-30">
           <span className="font-semibold text-text-primary text-lg">AssetFlow</span>
@@ -52,8 +63,10 @@ function AppLayout({ children }) {
           </button>
         </div>
         
-        <div className="flex-1 p-4 md:p-6 overflow-y-auto animate-fade-in-up w-full">
-          {children}
+        <div className="flex-1 p-4 md:p-6 overflow-y-auto w-full">
+          <PageTransition>
+            {children}
+          </PageTransition>
         </div>
       </main>
       

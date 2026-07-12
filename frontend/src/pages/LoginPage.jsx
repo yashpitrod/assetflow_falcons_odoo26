@@ -107,12 +107,6 @@ export default function LoginPage() {
         </button>
       </form>
 
-      {/* Dev hint */}
-      <div className="mt-4 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06]">
-        <p className="text-text-dim text-xs text-center">
-          Dev: use any email from mockData.js + any 4+ char password
-        </p>
-      </div>
 
       <p className="text-center text-text-dim text-sm mt-6">
         Don't have an account?{' '}
