@@ -13,7 +13,7 @@ export const getActivityLogs = async (req, res, next) => {
         take: limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          employee: { select: { name: true } }
+          actor: { select: { name: true } }
         }
       }),
       prisma.activityLog.count()
@@ -21,7 +21,7 @@ export const getActivityLogs = async (req, res, next) => {
 
     const formatted = logs.map(l => ({
       ...l,
-      actorName: l.employee?.name || 'System'
+      actorName: l.actor?.name || 'System'
     }));
 
     return res.status(200).json({

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback } from 'react';
 import { setAuthToken } from '../api/client';
 
 const AuthContext = createContext(null);
@@ -23,11 +23,13 @@ export function AuthProvider({ children }) {
     }
   });
 
-  // Restore token into the API client on first render
-  useEffect(() => {
+  // Restore token into the API client synchronously so it's available
+  // before any child component's useFetch fires on first render
+  const [tokenRestored] = useState(() => {
     const token = localStorage.getItem(TOKEN_KEY);
     if (token) setAuthToken(token);
-  }, []);
+    return true;
+  });
 
   const isAuthenticated = user !== null;
 

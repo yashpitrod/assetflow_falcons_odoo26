@@ -14,7 +14,7 @@ export const getKPIs = async (req, res, next) => {
       prisma.asset.count({ where: { status: 'UnderMaintenance' } })
     ]);
 
-    return successResponse(res, 200, 'Dashboard KPIs fetched successfully', {
+    return successResponse(res, 200, {
       totalAssets,
       available,
       allocated,
@@ -50,7 +50,7 @@ export const getOverdueReturns = async (req, res, next) => {
       };
     });
 
-    return successResponse(res, 200, 'Overdue returns fetched successfully', formatted);
+    return successResponse(res, 200, formatted);
   } catch (error) {
     next(error);
   }
