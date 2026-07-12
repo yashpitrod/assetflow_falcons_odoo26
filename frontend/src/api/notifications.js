@@ -13,6 +13,7 @@ export async function markAllNotificationsRead() {
   return await client.patch('/notifications/read-all', {});
 }
 
-export async function getActivityLogs() {
-  return await client.get('/activity-logs');
+// Paginated activity logs — backend may ignore page/limit initially, but we send them
+export async function getActivityLogs({ page = 1, limit = 20 } = {}) {
+  return await client.get(`/activity-logs?page=${page}&limit=${limit}`);
 }
