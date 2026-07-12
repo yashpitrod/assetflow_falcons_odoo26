@@ -74,11 +74,22 @@ function AppLayout({ children }) {
   );
 }
 
-// Auth layout — no sidebar, centered
+// Auth layout — no sidebar, full-screen with ambient background glow
 function AuthLayout({ children }) {
   return (
-    <div className="min-h-screen bg-bg-base flex items-center justify-center p-4">
-      {children}
+    <div className="min-h-screen bg-bg-base flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Ambient background glows — purely decorative */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            'radial-gradient(ellipse 60% 50% at 20% 40%, rgba(124,58,237,0.12) 0%, transparent 70%), radial-gradient(ellipse 50% 60% at 80% 70%, rgba(192,38,211,0.08) 0%, transparent 70%)',
+        }}
+      />
+      <div className="relative z-10 w-full flex items-center justify-center">
+        {children}
+      </div>
     </div>
   );
 }
