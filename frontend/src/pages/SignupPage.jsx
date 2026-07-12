@@ -6,30 +6,7 @@ import { useToast } from '../components/Toast';
 import GlassCard from '../components/GlassCard';
 import { signup } from '../api/auth';
 
-// Reusable form field — keeps template clean and DRY
-function Field({ id, label, type = 'text', icon: Icon, placeholder, value, onChange, error, autoComplete }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="eyebrow">{label}</label>
-      <div className="relative">
-        {Icon && (
-          <Icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-dim pointer-events-none" />
-        )}
-        <input
-          id={id}
-          type={type}
-          className={`glass-input ${Icon ? 'pl-10' : ''}`}
-          placeholder={placeholder}
-          value={value}
-          onChange={onChange}
-          autoComplete={autoComplete}
-        />
-      </div>
-      {error && <p className="text-status-danger text-xs">{error}</p>}
-    </div>
-  );
-}
-
+import Input from '../components/Input';
 export default function SignupPage() {
   const navigate = useNavigate();
   const { login: authLogin } = useAuth();
@@ -85,7 +62,7 @@ export default function SignupPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <Field
+          <Input
             id="signup-name"
             label="Full Name"
             icon={User}
@@ -95,7 +72,7 @@ export default function SignupPage() {
             error={errors.name}
             autoComplete="name"
           />
-          <Field
+          <Input
             id="signup-email"
             label="Work Email"
             type="email"
@@ -106,7 +83,7 @@ export default function SignupPage() {
             error={errors.email}
             autoComplete="email"
           />
-          <Field
+          <Input
             id="signup-password"
             label="Password"
             type="password"
@@ -117,7 +94,7 @@ export default function SignupPage() {
             error={errors.password}
             autoComplete="new-password"
           />
-          <Field
+          <Input
             id="signup-confirm"
             label="Confirm Password"
             type="password"

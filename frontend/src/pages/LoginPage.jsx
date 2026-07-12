@@ -4,6 +4,7 @@ import { Zap, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import GlassCard from '../components/GlassCard';
+import Input from '../components/Input';
 import { login } from '../api/auth';
 
 export default function LoginPage() {
@@ -58,49 +59,29 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Email */}
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="login-email" className="eyebrow">Email Address</label>
-            <div className="relative">
-              <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-dim pointer-events-none" />
-              <input
-                id="login-email"
-                type="email"
-                className="glass-input pl-10"
-                placeholder="you@company.com"
-                value={form.email}
-                autoComplete="email"
-                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-              />
-            </div>
-            {errors.email && <p className="text-status-danger text-xs">{errors.email}</p>}
-          </div>
+          <Input
+            id="login-email"
+            label="Email Address"
+            type="email"
+            icon={Mail}
+            placeholder="you@company.com"
+            value={form.email}
+            autoComplete="email"
+            onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+            error={errors.email}
+          />
 
-          {/* Password */}
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="login-password" className="eyebrow">Password</label>
-            <div className="relative">
-              <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-dim pointer-events-none" />
-              <input
-                id="login-password"
-                type={showPassword ? 'text' : 'password'}
-                className="glass-input pl-10 pr-11"
-                placeholder="••••••••"
-                value={form.password}
-                autoComplete="current-password"
-                onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(s => !s)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-dim hover:text-text-secondary transition-colors p-1"
-              >
-                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-              </button>
-            </div>
-            {errors.password && <p className="text-status-danger text-xs">{errors.password}</p>}
-          </div>
+          <Input
+            id="login-password"
+            label="Password"
+            type="password"
+            icon={Lock}
+            placeholder="••••••••"
+            value={form.password}
+            autoComplete="current-password"
+            onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+            error={errors.password}
+          />
 
           <div className="flex justify-end">
             <Link to="/forgot-password" className="text-xs text-text-dim hover:text-accent-yellow transition-colors">
