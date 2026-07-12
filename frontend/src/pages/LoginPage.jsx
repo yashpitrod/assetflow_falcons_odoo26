@@ -44,76 +44,87 @@ export default function LoginPage() {
   };
 
   return (
-    <GlassCard className="w-full max-w-md" padding="p-8">
-      {/* Logo */}
-      <div className="flex flex-col items-center gap-3 mb-8">
-        <div className="w-14 h-14 rounded-2xl gradient-purple flex items-center justify-center shadow-lg shadow-purple-500/20">
-          <Zap size={28} className="text-white" />
-        </div>
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold text-text-primary tracking-tight">AssetFlow</h1>
-          <p className="text-text-dim text-sm mt-1">Enterprise Asset Management</p>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {/* Email */}
-        <div className="flex flex-col gap-1.5">
-          <label className="eyebrow">Email Address</label>
-          <div className="relative">
-            <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-dim" />
-            <input
-              type="email"
-              className="glass-input pl-10"
-              placeholder="you@company.com"
-              value={form.email}
-              onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-            />
+    <div className="w-full max-w-sm sm:max-w-md">
+      <GlassCard padding="p-6 sm:p-8">
+        {/* Logo */}
+        <div className="flex flex-col items-center gap-3 mb-8">
+          <div className="w-14 h-14 rounded-2xl gradient-purple flex items-center justify-center shadow-lg shadow-purple-500/30">
+            <Zap size={28} className="text-white" />
           </div>
-          {errors.email && <p className="text-status-danger text-xs">{errors.email}</p>}
-        </div>
-
-        {/* Password */}
-        <div className="flex flex-col gap-1.5">
-          <label className="eyebrow">Password</label>
-          <div className="relative">
-            <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-dim" />
-            <input
-              type={showPassword ? 'text' : 'password'}
-              className="glass-input pl-10 pr-10"
-              placeholder="••••••••"
-              value={form.password}
-              onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(s => !s)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-dim hover:text-text-secondary transition-colors"
-            >
-              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
+          <div className="text-center">
+            <h1 className="text-2xl font-semibold text-text-primary tracking-tight">AssetFlow</h1>
+            <p className="text-text-dim text-sm mt-1">Enterprise Asset Management</p>
           </div>
-          {errors.password && <p className="text-status-danger text-xs">{errors.password}</p>}
         </div>
 
-        <div className="flex justify-end">
-          <Link to="/forgot-password" className="text-xs text-text-dim hover:text-accent-yellow transition-colors">
-            Forgot password?
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {/* Email */}
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="login-email" className="eyebrow">Email Address</label>
+            <div className="relative">
+              <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-dim pointer-events-none" />
+              <input
+                id="login-email"
+                type="email"
+                className="glass-input pl-10"
+                placeholder="you@company.com"
+                value={form.email}
+                autoComplete="email"
+                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+              />
+            </div>
+            {errors.email && <p className="text-status-danger text-xs">{errors.email}</p>}
+          </div>
+
+          {/* Password */}
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="login-password" className="eyebrow">Password</label>
+            <div className="relative">
+              <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-dim pointer-events-none" />
+              <input
+                id="login-password"
+                type={showPassword ? 'text' : 'password'}
+                className="glass-input pl-10 pr-11"
+                placeholder="••••••••"
+                value={form.password}
+                autoComplete="current-password"
+                onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(s => !s)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-dim hover:text-text-secondary transition-colors p-1"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            {errors.password && <p className="text-status-danger text-xs">{errors.password}</p>}
+          </div>
+
+          <div className="flex justify-end">
+            <Link to="/forgot-password" className="text-xs text-text-dim hover:text-accent-yellow transition-colors">
+              Forgot password?
+            </Link>
+          </div>
+
+          <button
+            type="submit"
+            id="login-submit"
+            className="btn-yellow w-full mt-1"
+            disabled={loading}
+          >
+            {loading ? 'Signing in…' : 'Sign in'}
+          </button>
+        </form>
+
+        <p className="text-center text-text-dim text-sm mt-6">
+          Don't have an account?{' '}
+          <Link to="/signup" className="text-accent-yellow hover:underline font-medium">
+            Sign up
           </Link>
-        </div>
-
-        <button type="submit" className="btn-yellow w-full mt-2" disabled={loading}>
-          {loading ? 'Signing in…' : 'Sign in'}
-        </button>
-      </form>
-
-
-      <p className="text-center text-text-dim text-sm mt-6">
-        Don't have an account?{' '}
-        <Link to="/signup" className="text-accent-yellow hover:underline font-medium">
-          Sign up
-        </Link>
-      </p>
-    </GlassCard>
+        </p>
+      </GlassCard>
+    </div>
   );
 }

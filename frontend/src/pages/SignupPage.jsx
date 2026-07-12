@@ -6,6 +6,30 @@ import { useToast } from '../components/Toast';
 import GlassCard from '../components/GlassCard';
 import { signup } from '../api/auth';
 
+// Reusable form field — keeps template clean and DRY
+function Field({ id, label, type = 'text', icon: Icon, placeholder, value, onChange, error, autoComplete }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label htmlFor={id} className="eyebrow">{label}</label>
+      <div className="relative">
+        {Icon && (
+          <Icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-dim pointer-events-none" />
+        )}
+        <input
+          id={id}
+          type={type}
+          className={`glass-input ${Icon ? 'pl-10' : ''}`}
+          placeholder={placeholder}
+          value={value}
+          onChange={onChange}
+          autoComplete={autoComplete}
+        />
+      </div>
+      {error && <p className="text-status-danger text-xs">{error}</p>}
+    </div>
+  );
+}
+
 export default function SignupPage() {
   const navigate = useNavigate();
   const { login: authLogin } = useAuth();
@@ -44,59 +68,91 @@ export default function SignupPage() {
     }
   };
 
-  const Field = ({ id, label, type = 'text', icon: Icon, placeholder, field, error }) => (
-    <div className="flex flex-col gap-1.5">
-      <label className="eyebrow">{label}</label>
-      <div className="relative">
-        {Icon && <Icon size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-dim" />}
-        <input
-          id={id}
-          type={type}
-          className={`glass-input ${Icon ? 'pl-10' : ''}`}
-          placeholder={placeholder}
-          value={form[field]}
-          onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
-        />
-      </div>
-      {error && <p className="text-status-danger text-xs">{error}</p>}
-    </div>
-  );
+  const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
 
   return (
-    <GlassCard className="w-full max-w-md" padding="p-8">
-      <div className="flex flex-col items-center gap-3 mb-8">
-        <div className="w-14 h-14 rounded-2xl gradient-purple flex items-center justify-center shadow-lg shadow-purple-500/20">
-          <Zap size={28} className="text-white" />
-        </div>
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold text-text-primary">Create Account</h1>
-          <p className="text-text-dim text-sm mt-1">You'll be added as an Employee</p>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <Field id="name" label="Full Name" icon={User} placeholder="Yash Pitrod" field="name" error={errors.name} />
-        <Field id="email" label="Work Email" icon={Mail} type="email" placeholder="you@company.com" field="email" error={errors.email} />
-        <Field id="password" label="Password" icon={Lock} type="password" placeholder="Min. 6 characters" field="password" error={errors.password} />
-        <Field id="confirm" label="Confirm Password" icon={Lock} type="password" placeholder="Repeat password" field="confirmPassword" error={errors.confirmPassword} />
-
-        <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-start gap-2 mt-1">
-          <Building2 size={14} className="text-text-dim mt-0.5 shrink-0" />
-          <p className="text-text-dim text-xs">
-            Your account starts as <strong className="text-text-secondary">Employee</strong> role.
-            An Admin can promote you to Department Head or Asset Manager from the Employee Directory.
-          </p>
+    <div className="w-full max-w-sm sm:max-w-md">
+      <GlassCard padding="p-6 sm:p-8">
+        {/* Logo */}
+        <div className="flex flex-col items-center gap-3 mb-7">
+          <div className="w-14 h-14 rounded-2xl gradient-purple flex items-center justify-center shadow-lg shadow-purple-500/30">
+            <Zap size={28} className="text-white" />
+          </div>
+          <div className="text-center">
+            <h1 className="text-2xl font-semibold text-text-primary">Create Account</h1>
+            <p className="text-text-dim text-sm mt-1">You'll be added as an Employee</p>
+          </div>
         </div>
 
-        <button type="submit" className="btn-yellow w-full mt-1" disabled={loading}>
-          {loading ? 'Creating account…' : 'Create Account'}
-        </button>
-      </form>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <Field
+            id="signup-name"
+            label="Full Name"
+            icon={User}
+            placeholder="Yash Pitrod"
+            value={form.name}
+            onChange={set('name')}
+            error={errors.name}
+            autoComplete="name"
+          />
+          <Field
+            id="signup-email"
+            label="Work Email"
+            type="email"
+            icon={Mail}
+            placeholder="you@company.com"
+            value={form.email}
+            onChange={set('email')}
+            error={errors.email}
+            autoComplete="email"
+          />
+          <Field
+            id="signup-password"
+            label="Password"
+            type="password"
+            icon={Lock}
+            placeholder="Min. 6 characters"
+            value={form.password}
+            onChange={set('password')}
+            error={errors.password}
+            autoComplete="new-password"
+          />
+          <Field
+            id="signup-confirm"
+            label="Confirm Password"
+            type="password"
+            icon={Lock}
+            placeholder="Repeat password"
+            value={form.confirmPassword}
+            onChange={set('confirmPassword')}
+            error={errors.confirmPassword}
+            autoComplete="new-password"
+          />
 
-      <p className="text-center text-text-dim text-sm mt-6">
-        Already have an account?{' '}
-        <Link to="/login" className="text-accent-yellow hover:underline font-medium">Sign in</Link>
-      </p>
-    </GlassCard>
+          {/* Role notice */}
+          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] flex items-start gap-2 mt-1">
+            <Building2 size={14} className="text-text-dim mt-0.5 shrink-0" />
+            <p className="text-text-dim text-xs">
+              Your account starts as <strong className="text-text-secondary">Employee</strong> role.
+              An Admin can promote you to Department Head or Asset Manager from the Employee Directory.
+            </p>
+          </div>
+
+          <button
+            type="submit"
+            id="signup-submit"
+            className="btn-yellow w-full mt-1"
+            disabled={loading}
+          >
+            {loading ? 'Creating account…' : 'Create Account'}
+          </button>
+        </form>
+
+        <p className="text-center text-text-dim text-sm mt-6">
+          Already have an account?{' '}
+          <Link to="/login" className="text-accent-yellow hover:underline font-medium">Sign in</Link>
+        </p>
+      </GlassCard>
+    </div>
   );
 }
