@@ -1,7 +1,9 @@
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { setAuthToken } from '../api/client';
 
 const AuthContext = createContext(null);
+const TOKEN_KEY = 'assetflow_token';
+const USER_KEY = 'assetflow_user';
 
 // Hook to access auth state anywhere in the app
 export function useAuth() {
@@ -10,29 +12,47 @@ export function useAuth() {
   return ctx;
 }
 
-// Auth provider — starts LOGGED OUT. Login page is the real entry point.
+// Auth provider — restores session from localStorage on init
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem(USER_KEY);
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Restore token into the API client on first render
+  useEffect(() => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) setAuthToken(token);
+  }, []);
 
   const isAuthenticated = user !== null;
 
   const login = useCallback((userData, token) => {
-    // Set token in the API client for subsequent requests
+    // Persist token so API client survives reloads
     if (token) {
+      localStorage.setItem(TOKEN_KEY, token);
       setAuthToken(token);
     }
-    
-    // Store user data in memory
-    setUser({
+
+    const safeUser = {
       id: userData.id,
       name: userData.name,
       email: userData.email,
       role: userData.role,
       departmentId: userData.departmentId,
-    });
+    };
+
+    localStorage.setItem(USER_KEY, JSON.stringify(safeUser));
+    setUser(safeUser);
   }, []);
 
   const logout = useCallback(() => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
     setAuthToken(null);
     setUser(null);
   }, []);
