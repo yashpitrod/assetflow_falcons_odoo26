@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Zap, User, Mail, Lock, Building2 } from 'lucide-react';
+import { Zap, User, Mail, Lock, Building2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import GlassCard from '../components/GlassCard';
